@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Brand */
+  --brand-teal: #01aa9a;
+  --brand-emerald: #1eb677;
+  --brand-link: #03ab98;
+  --brand-gradient: linear-gradient(92.93deg, #01aa9a 0%, #1eb677 100%);
+  --cta-gradient: linear-gradient(99.59deg, #1eb677 0%, #01aa9a 100%);
+  --brand-tint-50: #ecfdf5;
+  --brand-tint-100: #d1fadf;
+  --brand-soft-border: #b6e9d5;
+
+  /* Canvas (unified page + sidebar) */
+  --bg-canvas: #fbfcfd;
+  --bg-page: #fbfcfd;
+  --side-bg: #fbfcfd;
+
+  /* Elevated surfaces */
+  --surface-card: #ffffff;
+  --surface-input: #ffffff;
+  --surface-popover: #ffffff;
+  --surface-overlay: rgba(15, 23, 43, 0.45);
+
+  /* Other surfaces */
+  --bg-subtle: #f9fafb;
+  --bg-muted: #f3f4f6;
+
+  /* Borders */
+  --side-divider: #e2e9f8;
+  --border-subtle: #edf1f7;
+  --border-default: #e5e7eb;
+  --border-strong: #d1d5db;
+  --border-focus: var(--brand-emerald);
+
+  /* Sidebar tokens */
+  --side-group-label: #6a7282;
+  --side-item-text: #364153;
+  --side-item-icon: #364153;
+
+  /* Text */
+  --text-heading: #101828;
+  --text-body: #1f2937;
+  --text-label: #0f172b;
+  --text-muted: #6b7280;
+  --text-placeholder: #6a7282;
+  --text-subtle: #9ca3af;
+  --text-inverse: #ffffff;
+  --text-link: #03ab98;
+  --text-required: #ff0100;
+
+  /* Status */
+  --success: #1eb677;
+  --success-bg: #ecfdf5;
+  --success-border: #b6e9d5;
+  --warning: #f59e0b;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --danger: #ef4444;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+  --info: #1877f2;
+  --info-bg: #e6f1ff;
+  --info-border: #bfdbfe;
+
+  /* Shadows */
+  --shadow-chip: 0 0 10px rgba(0, 0, 0, 0.08);
+  --shadow-float: 0 0 20px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.15);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.25);
+  --shadow-focus: 0 0 0 3px rgba(30, 182, 119, 0.2);
+
+  /* Font */
+  --font-family: "Figtree", system-ui, -apple-system, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg-page);
+  color: var(--text-body);
+  letter-spacing: -0.31px;
+}
