@@ -7,7 +7,7 @@ export default function TemplateCard({ template }) {
   const Icon = config.icon;
 
   return (
-    <article className="flex flex-col gap-3 rounded-md border border-line bg-white p-4 shadow-chip">
+    <article className="flex flex-col gap-3 rounded-md border border-line bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
       <header className="flex items-center justify-between gap-2">
         <span
           className={[
@@ -42,28 +42,28 @@ export default function TemplateCard({ template }) {
 }
 
 function Preview({ template, config }) {
+  const Icon = config.icon;
+  const baseClass =
+    "flex h-[140px] items-center justify-start rounded-xs bg-canvas p-3";
+
   if (template.type === "text") {
     return (
-      <p
-        className="line-clamp-3 rounded-xs bg-canvas p-3 text-[12px] font-medium text-ink-body"
-        style={{ lineHeight: 1.5 }}
-      >
-        {template.body}
-      </p>
+      <div className={baseClass}>
+        <p
+          className="line-clamp-3 text-[12px] font-medium text-ink-body"
+          style={{ lineHeight: 1.5 }}
+        >
+          {template.body}
+        </p>
+      </div>
     );
   }
+
   if (template.type === "location") {
     return (
-      <div className="flex flex-col gap-2">
-        <div
-          className={[
-            "flex h-24 items-center justify-center rounded-xs",
-            config.tile.bg,
-          ].join(" ")}
-        >
-          <config.icon size={28} className={config.tile.text} strokeWidth={1.75} />
-        </div>
-        <div className="flex flex-col">
+      <div className={`${baseClass} flex-col justify-center gap-2`}>
+        <Icon size={28} className={config.tile.text} strokeWidth={1.75} />
+        <div className="flex flex-col items-center text-center">
           <span className="text-[12px] font-semibold text-ink-heading">
             {template.placeName}
           </span>
@@ -74,17 +74,11 @@ function Preview({ template, config }) {
       </div>
     );
   }
+
   // image / video / document
   return (
-    <div className="flex flex-col gap-2">
-      <div
-        className={[
-          "flex h-24 items-center justify-center rounded-xs",
-          config.tile.bg,
-        ].join(" ")}
-      >
-        <config.icon size={28} className={config.tile.text} strokeWidth={1.75} />
-      </div>
+    <div className={`${baseClass} flex-col justify-center gap-2`}>
+      <Icon size={28} className={config.tile.text} strokeWidth={1.75} />
       <span className="truncate text-[11px] font-medium text-ink-muted">
         {template.filename}
       </span>

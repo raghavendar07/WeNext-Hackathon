@@ -26,6 +26,8 @@ import PlanCard from "./PlanCard.jsx";
 import ProfilePanel from "./ProfilePanel.jsx";
 import NotificationPanel from "./NotificationPanel.jsx";
 import SearchInput from "./SearchInput.jsx";
+
+const CRM_TAB_IDS = ["lead-board", "leads", "customers", "tags"];
 import { WhatsappLogo, InstagramLogo, LinkedinLogo } from "./BrandLogos.jsx";
 
 export default function Sidebar({ active: activeProp, onActiveChange }) {
@@ -149,7 +151,7 @@ export default function Sidebar({ active: activeProp, onActiveChange }) {
           <SubItem
             icon={Users}
             label="Customers"
-            active={active === "customers"}
+            active={CRM_TAB_IDS.includes(active)}
             onClick={() => setActive("customers")}
           />
           <SubItem

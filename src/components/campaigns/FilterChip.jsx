@@ -4,11 +4,11 @@ export default function FilterChip({ label, icon: Icon, active, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        "inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-[12px]",
+        "inline-flex h-9 items-center gap-1.5 rounded-full border px-4 py-2 text-[12px] font-medium",
         "transition-colors duration-150 ease-out",
         active
-          ? "border-ink-heading bg-ink-heading font-semibold text-white"
-          : "border-line bg-canvas font-medium text-ink-muted hover:bg-surface-subtle hover:text-ink-heading",
+          ? "border-ink-heading bg-ink-heading text-white"
+          : "border-line bg-canvas text-ink-muted hover:bg-surface-subtle hover:text-ink-heading",
       ].join(" ")}
     >
       {Icon && (

@@ -6,6 +6,10 @@ import Filters from "./components/Filters.jsx";
 import EmptyState from "./components/EmptyState.jsx";
 import ChatPage from "./components/ChatPage.jsx";
 import CampaignsPage from "./components/campaigns/CampaignsPage.jsx";
+import CRMPage from "./components/crm/CRMPage.jsx";
+import AppointmentsPage from "./components/appointments/AppointmentsPage.jsx";
+
+const CRM_TAB_IDS = ["lead-board", "leads", "customers", "tags"];
 
 export default function App() {
   const [onboarded, setOnboarded] = useState(true);
@@ -18,13 +22,15 @@ export default function App() {
 }
 
 function Home() {
-  const [active, setActive] = useState("campaigns");
+  const [active, setActive] = useState("appointments");
   const [view, setView] = useState("grid");
   const [chip, setChip] = useState("All");
   const [query, setQuery] = useState("");
 
   const isChat = active === "whatsapp";
   const isCampaigns = active === "campaigns";
+  const isCRM = CRM_TAB_IDS.includes(active);
+  const isAppointments = active === "appointments";
 
   return (
     <MainLayout active={active} onActiveChange={setActive} flush={isChat}>
@@ -32,6 +38,10 @@ function Home() {
         <ChatPage />
       ) : isCampaigns ? (
         <CampaignsPage />
+      ) : isCRM ? (
+        <CRMPage tab={active} onTabChange={setActive} />
+      ) : isAppointments ? (
+        <AppointmentsPage />
       ) : (
         <div className="mx-auto flex max-w-6xl flex-col gap-5">
           <PageHeader

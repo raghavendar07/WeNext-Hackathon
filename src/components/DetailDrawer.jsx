@@ -6,8 +6,10 @@ export default function DetailDrawer({
   open,
   onClose,
   ariaLabel,
+  size = "normal",
   children,
 }) {
+  const isFullscreen = size === "fullscreen";
   const cardRef = useRef(null);
   const lastFocusedRef = useRef(null);
 
@@ -67,7 +69,14 @@ export default function DetailDrawer({
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-5">
+        <div
+          className={[
+            "fixed inset-0 z-50",
+            isFullscreen
+              ? "p-6"
+              : "flex items-center justify-center p-5",
+          ].join(" ")}
+        >
           <motion.div
             key="backdrop"
             initial={{ opacity: 0 }}
@@ -89,10 +98,10 @@ export default function DetailDrawer({
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ type: "tween", ease: "easeOut", duration: 0.2 }}
             className={[
-              "relative flex max-h-[85vh] w-max flex-col overflow-hidden",
-              "min-w-[480px] max-w-[720px]",
-              "rounded-lg border border-line bg-white shadow-modal",
-              "focus:outline-none",
+              "relative flex flex-col overflow-hidden rounded-lg border border-line bg-white shadow-modal focus:outline-none",
+              isFullscreen
+                ? "h-full w-full"
+                : "max-h-[85vh] w-max min-w-[480px] max-w-[720px]",
             ].join(" ")}
           >
             {children}

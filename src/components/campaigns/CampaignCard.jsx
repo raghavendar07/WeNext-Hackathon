@@ -15,7 +15,7 @@ export default function CampaignCard({ campaign }) {
   const Icon = campaign.icon ?? Mail;
 
   return (
-    <article className="flex flex-col gap-4 rounded-md border border-line bg-white p-5 shadow-chip">
+    <article className="flex flex-col gap-4 rounded-md border border-line bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
       {/* Row 1 — identity + menu */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-start gap-3">
@@ -54,7 +54,7 @@ export default function CampaignCard({ campaign }) {
       </div>
 
       {/* Row 2 — KPI metrics */}
-      <div className="flex divide-x divide-line border-t border-line pt-3">
+      <div className="flex divide-x divide-line">
         <KPIMetric value={campaign.kpis.delivered} name="Delivered" />
         <KPIMetric value={campaign.kpis.opened}    name="Opened" />
         <KPIMetric value={campaign.kpis.clicked}   name="Clicked" />

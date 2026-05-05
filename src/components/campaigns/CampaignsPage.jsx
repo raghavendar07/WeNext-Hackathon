@@ -6,6 +6,7 @@ import CampaignsFilterRow from "./CampaignsFilterRow.jsx";
 import CampaignKpiRow from "./CampaignKpiRow.jsx";
 import CampaignCard from "./CampaignCard.jsx";
 import TemplatesPage from "../templates/TemplatesPage.jsx";
+import CreateCampaignDrawer from "./create/CreateCampaignDrawer.jsx";
 
 const STATUS_OPTIONS = [
   { id: "all", label: "All Campaigns" },
@@ -110,6 +111,7 @@ export default function CampaignsPage() {
   const [status, setStatus] = useState("all");
   const [type, setType] = useState("all");
   const [query, setQuery] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const statusValue = STATUS_TO_VALUE[status];
@@ -190,6 +192,7 @@ export default function CampaignsPage() {
             status={status}
             statusOptions={STATUS_OPTIONS}
             onStatusChange={setStatus}
+            onNew={() => setCreateOpen(true)}
           />
 
           {/* Layer 3 — KPI cards */}
@@ -224,6 +227,11 @@ export default function CampaignsPage() {
           </div>
         </>
       )}
+
+      <CreateCampaignDrawer
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+      />
     </div>
   );
 }
