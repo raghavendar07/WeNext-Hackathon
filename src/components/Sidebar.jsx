@@ -59,8 +59,8 @@ export default function Sidebar({ active: activeProp, onActiveChange }) {
           aria-label="Collapse sidebar"
           className={[
             "inline-flex h-8 w-8 items-center justify-center rounded-[8px]",
-            "text-[#5E6373] transition-colors duration-150 ease-out",
-            "hover:bg-[#F3F4F6] hover:text-[#374151]",
+            "text-[#6A6A6A] transition-colors duration-150 ease-out",
+            "hover:bg-[#F2F2F2] hover:text-[#3F3F3F]",
             "focus:outline-none focus-visible:shadow-focus",
           ].join(" ")}
         >
@@ -123,19 +123,19 @@ export default function Sidebar({ active: activeProp, onActiveChange }) {
           />
           <SubItem
             icon={Share2}
-            label="ADS"
+            label="Ads"
             active={active === "ads"}
             onClick={() => setActive("ads")}
           />
           <SubItem
             icon={Share2}
-            label="Social Media Posts"
+            label="Social Posts"
             active={active === "social-media-posts"}
             onClick={() => setActive("social-media-posts")}
           />
         </Section>
 
-        <SubItem
+        <NavItem
           icon={Workflow}
           label="Automations"
           active={active === "automations"}
@@ -232,7 +232,7 @@ export default function Sidebar({ active: activeProp, onActiveChange }) {
             ref={profileTriggerRef}
             className={[
               "group/profile-row flex h-[52px] w-full items-center gap-[8px] rounded-[10px] px-[10px] py-[8px]",
-              "transition-colors duration-150 ease-out hover:bg-[#F3F4F6]",
+              "transition-colors duration-150 ease-out hover:bg-[#F2F2F2]",
             ].join(" ")}
           >
             <button
@@ -248,10 +248,10 @@ export default function Sidebar({ active: activeProp, onActiveChange }) {
                 RS
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[14px] font-medium leading-tight text-[#111827]">
+                <div className="truncate text-[14px] font-medium leading-tight text-[#222222]">
                   Raghav S
                 </div>
-                <div className="truncate text-[12px] leading-tight text-[#6B7280]">
+                <div className="truncate text-[12px] leading-tight text-[#6A6A6A]">
                   Free plan
                 </div>
               </div>
@@ -266,8 +266,8 @@ export default function Sidebar({ active: activeProp, onActiveChange }) {
               aria-label={profileOpen ? "Close profile menu" : "Open profile menu"}
               className={[
                 "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px]",
-                "text-[#9CA3AF] transition-colors duration-150 ease-out",
-                "hover:bg-white hover:text-[#374151]",
+                "text-[#929292] transition-colors duration-150 ease-out",
+                "hover:bg-white hover:text-[#3F3F3F]",
                 "focus:outline-none focus-visible:shadow-focus",
               ].join(" ")}
             >

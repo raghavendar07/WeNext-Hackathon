@@ -3,11 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, X } from "lucide-react";
 import MessageCreationChooser from "./MessageCreationChooser.jsx";
 import AIComposeStep from "./AIComposeStep.jsx";
+import ManualComposeStep from "./ManualComposeStep.jsx";
+import LibraryComposeStep from "./LibraryComposeStep.jsx";
 
-const STEP_TITLES = {
-  mode:    "Create Campaign",
-  compose: "Compose Message",
-  review:  "Review & Send",
+const MODE_LABEL = {
+  ai:       "AI",
+  manual:   "Manual",
+  template: "From Library",
 };
 
 export default function CreateCampaignDrawer({ open, onClose }) {
@@ -52,6 +54,8 @@ export default function CreateCampaignDrawer({ open, onClose }) {
     onClose?.();
   };
 
+  const showSubLabel = step !== "mode" && mode;
+
   return (
     <AnimatePresence>
       {open && (
@@ -66,7 +70,7 @@ export default function CreateCampaignDrawer({ open, onClose }) {
           aria-label="Create campaign"
           className="fixed inset-0 z-50 flex flex-col bg-white"
         >
-          <header className="flex items-center justify-between gap-3 border-b border-line px-6 py-4">
+          <header className="flex items-center justify-between gap-3 border-b border-line px-6 py-3">
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -76,9 +80,16 @@ export default function CreateCampaignDrawer({ open, onClose }) {
               >
                 <ChevronLeft size={16} strokeWidth={1.75} />
               </button>
-              <span className="text-[13px] font-medium text-ink-muted">
-                {STEP_TITLES[step] ?? "Create Campaign"}
-              </span>
+              <div className="flex flex-col">
+                <span className="text-[13px] font-semibold text-ink-heading">
+                  Create Campaign
+                </span>
+                {showSubLabel && (
+                  <span className="text-[11px] font-medium text-ink-muted">
+                    {MODE_LABEL[mode]}
+                  </span>
+                )}
+              </div>
             </div>
             <button
               type="button"
@@ -90,7 +101,7 @@ export default function CreateCampaignDrawer({ open, onClose }) {
             </button>
           </header>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-hidden">
             {step === "mode" && (
               <MessageCreationChooser
                 selected={mode}
@@ -100,8 +111,17 @@ export default function CreateCampaignDrawer({ open, onClose }) {
             {step === "compose" && mode === "ai" && (
               <AIComposeStep onSubmit={() => setStep("review")} />
             )}
-            {step === "compose" && mode !== "ai" && (
-              <ComposeStepPlaceholder mode={mode} onContinue={() => setStep("review")} />
+            {step === "compose" && mode === "manual" && (
+              <ManualComposeStep onSend={handleClose} onCancel={handleClose} />
+            )}
+            {step === "compose" && mode === "template" && (
+              <LibraryComposeStep
+                onSend={handleClose}
+                onCancel={handleClose}
+                onCreateNew={() => {
+                  setMode("manual");
+                }}
+              />
             )}
             {step === "review" && (
               <ReviewStepPlaceholder onSend={handleClose} />
