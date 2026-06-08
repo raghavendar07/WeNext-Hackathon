@@ -47,15 +47,16 @@ const NODE_TYPES = {
   flowNode: FlowNode,
 };
 
-export default function AutomationBuilder({ presetExampleId, presetAutomation, onCancel, onSaveDraft, onActivate }) {
+export default function AutomationBuilder({ presetExampleId, presetAutomation, presetChannel = "whatsapp", onCancel, onSaveDraft, onActivate }) {
   return (
     <ReactFlowProvider>
-      <BuilderInner presetExampleId={presetExampleId} presetAutomation={presetAutomation} onCancel={onCancel} onSaveDraft={onSaveDraft} onActivate={onActivate} />
+      <BuilderInner presetExampleId={presetExampleId} presetAutomation={presetAutomation} presetChannel={presetChannel} onCancel={onCancel} onSaveDraft={onSaveDraft} onActivate={onActivate} />
     </ReactFlowProvider>
   );
 }
 
-function BuilderInner({ presetExampleId, presetAutomation, onCancel, onSaveDraft, onActivate }) {
+function BuilderInner({ presetExampleId, presetAutomation, presetChannel = "whatsapp", onCancel, onSaveDraft, onActivate }) {
+  const [channel, setChannel] = useState(presetChannel);
   const initialBuild = useMemo(() => {
     if (presetAutomation) {
       return { name: presetAutomation.name, flow: presetAutomation.flow ?? [], automation: presetAutomation };
@@ -208,16 +209,17 @@ function BuilderInner({ presetExampleId, presetAutomation, onCancel, onSaveDraft
       <TopBar
         name={name} onNameChange={setName}
         onCancel={onCancel}
-        onSaveDraft={() => onSaveDraft?.({ name, flow: data })}
+        onSaveDraft={() => onSaveDraft?.({ name, flow: data, channel })}
         onActivate={() => canActivate && setConfirmActivate(true)}
         onTest={() => setTestOpen(true)}
         canActivate={canActivate}
         savedAt={savedAt}
         status={initialBuild.automation?.status ?? "draft"}
+        channel={channel}
       />
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <Palette flow={data} onAdd={addNode} />
+        <Palette flow={data} channel={channel} onChannelChange={setChannel} onAdd={addNode} />
         <div ref={wrapperRef} className="relative flex min-w-0 flex-1" onDragOver={onDragOver} onDrop={onDrop}>
           <CanvasOverlays
             automation={initialBuild.automation}
@@ -370,10 +372,13 @@ function buildRfEdges(data) {
 
 /* ──────────── Top bar ──────────── */
 
-function TopBar({ name, onNameChange, onCancel, onSaveDraft, onActivate, onTest, canActivate, savedAt, status }) {
+function TopBar({ name, onNameChange, onCancel, onSaveDraft, onActivate, onTest, canActivate, savedAt, status, channel }) {
   const savedLabel = savedAt ? "Saved" : "Unsaved";
   const statusLabel = status === "active" ? "Active" : status === "error" ? "Needs attention" : status === "paused" ? "Paused" : "Draft";
   const statusDot = status === "active" ? "bg-success" : status === "error" ? "bg-danger" : "bg-ink-subtle";
+  const channelPill = channel === "instagram"
+    ? { bg: "bg-pink-50", text: "text-pink-700", icon: "📸", label: "Instagram" }
+    : { bg: "bg-emerald-50", text: "text-emerald-700", icon: "💬", label: "WhatsApp" };
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-[#EBEEF2] bg-[rgba(255,255,255,0.85)] px-6 backdrop-blur-md">
       <div className="flex items-center gap-3">
@@ -384,6 +389,9 @@ function TopBar({ name, onNameChange, onCancel, onSaveDraft, onActivate, onTest,
           type="text" value={name} onChange={(e) => onNameChange(e.target.value)}
           className="h-9 w-[280px] rounded-sm border border-transparent bg-transparent px-2 text-[16px] font-semibold text-[#101828] focus:border-[#EBEEF2] focus:bg-white focus:outline-none"
         />
+        <span className={["inline-flex h-7 items-center gap-1 rounded-pill px-2.5 text-[11px] font-semibold", channelPill.bg, channelPill.text].join(" ")} title={`Channel: ${channelPill.label}`}>
+          <span>{channelPill.icon}</span>{channelPill.label}
+        </span>
       </div>
       <div className="flex items-center gap-2">
         <span className="inline-flex h-7 items-center text-[11px] font-medium text-[#9CA3AF]">{savedLabel}</span>
@@ -455,7 +463,25 @@ function Chip3({ icon, label }) {
 
 /* ──────────── Palette ──────────── */
 
-function Palette({ flow, onAdd }) {
+// WhatsApp-only item ids — hidden when channel = instagram
+const WA_ONLY_IDS = new Set(["wa_received", "wa_keyword", "send_wa", "send_list", "wa_flow"]);
+
+function isItemAllowedForChannel(item, sectionId, channel) {
+  if (channel === "instagram") {
+    if (WA_ONLY_IDS.has(item.id)) return false;
+    return true;
+  }
+  // whatsapp: hide instagram-only items (tagged channel: instagram)
+  if (item.channel === "instagram") return false;
+  return true;
+}
+
+function isSectionAllowedForChannel(sectionId, channel) {
+  if (channel === "whatsapp" && sectionId === "instagram") return false;
+  return true;
+}
+
+function Palette({ flow, channel, onChannelChange, onAdd }) {
   const [query, setQuery] = useState("");
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof localStorage === "undefined") return {};
@@ -477,20 +503,23 @@ function Palette({ flow, onAdd }) {
 
   return (
     <aside className="flex w-[240px] shrink-0 flex-col gap-3 overflow-y-auto border-r border-[#EBEEF2] bg-white p-4">
+      <ChannelToggle channel={channel} onChange={onChannelChange} disabled={flow.length > 0} />
+
       <label className="flex h-9 items-center gap-2 rounded-[6px] border border-[#EBEEF2] bg-white px-2">
         <Search size={12} className="text-[#9CA3AF]" />
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search nodes…"
           className="min-w-0 flex-1 bg-transparent text-[12px] text-[#101828] placeholder:text-[#9CA3AF] focus:outline-none" />
       </label>
 
-      {PALETTE_SECTIONS.map((section) => {
-        const items = section.items.filter(matches);
+      {PALETTE_SECTIONS.filter((s) => isSectionAllowedForChannel(s.id, channel)).map((section) => {
+        const filteredByChannel = section.items.filter((it) => isItemAllowedForChannel(it, section.id, channel));
+        const items = filteredByChannel.filter(matches);
         const isCollapsed = !!collapsed[section.id];
         return (
           <Group
             key={section.id}
             label={section.label}
-            count={section.items.length}
+            count={filteredByChannel.length}
             collapsed={isCollapsed}
             onToggle={() => toggleCollapsed(section.id)}
           >
@@ -515,6 +544,45 @@ function Palette({ flow, onAdd }) {
         );
       })}
     </aside>
+  );
+}
+
+function ChannelToggle({ channel, onChange, disabled }) {
+  const opts = [
+    { id: "whatsapp",  label: "WhatsApp",  icon: "💬", active: "bg-emerald-50 text-emerald-700 border-emerald-500" },
+    { id: "instagram", label: "Instagram", icon: "📸", active: "bg-pink-50 text-pink-700 border-pink-500" },
+  ];
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-[#9CA3AF]">Channel</span>
+      <div className="flex gap-1 rounded-[8px] border border-[#EBEEF2] bg-[#FAFAF9] p-0.5">
+        {opts.map((o) => {
+          const isActive = channel === o.id;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              disabled={disabled && !isActive}
+              onClick={() => {
+                if (disabled && !isActive) {
+                  alert("Clear the canvas to switch channels.");
+                  return;
+                }
+                onChange?.(o.id);
+              }}
+              className={[
+                "inline-flex flex-1 items-center justify-center gap-1 rounded-[6px] border px-2 py-1.5 text-[11px] font-semibold transition-colors",
+                isActive ? o.active : "border-transparent text-[#6B7280] hover:bg-white",
+                disabled && !isActive ? "cursor-not-allowed opacity-50" : "",
+              ].join(" ")}
+              title={disabled && !isActive ? "Clear flow to switch channels" : ""}
+            >
+              <span>{o.icon}</span>{o.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
