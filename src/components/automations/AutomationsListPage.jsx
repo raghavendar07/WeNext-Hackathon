@@ -25,8 +25,15 @@ const STATUS_FILTERS = [
   { id: "error",   label: "Errors" },
 ];
 
+const CHANNEL_FILTERS = [
+  { id: "all",       label: "All channels", icon: "🌐" },
+  { id: "whatsapp",  label: "WhatsApp",     icon: "💬" },
+  { id: "instagram", label: "Instagram",    icon: "📸" },
+];
+
 export default function AutomationsListPage({ automations = AUTOMATIONS, onCreate, onUseExample, onOpen }) {
   const [status, setStatus] = useState("all");
+  const [channel, setChannel] = useState("all");
   const [query, setQuery] = useState("");
   const [view, setView] = useState("card");
 
@@ -37,10 +44,11 @@ export default function AutomationsListPage({ automations = AUTOMATIONS, onCreat
   const filtered = useMemo(() => {
     return automations.filter((a) => {
       if (status !== "all" && a.status !== status) return false;
+      if (channel !== "all" && (a.channel ?? "whatsapp") !== channel) return false;
       if (query && !a.name.toLowerCase().includes(query.toLowerCase())) return false;
       return true;
     });
-  }, [automations, status, query]);
+  }, [automations, status, channel, query]);
 
   const metrics = useMemo(() => buildMetrics(automations), [automations]);
 
@@ -50,11 +58,12 @@ export default function AutomationsListPage({ automations = AUTOMATIONS, onCreat
       <Metrics metrics={metrics} />
       <Toolbar
         status={status} onStatusChange={setStatus}
+        channel={channel} onChannelChange={setChannel}
         query={query} onQueryChange={setQuery}
         view={view} onViewChange={setView}
       />
       {filtered.length === 0 ? (
-        <NoMatch onReset={() => { setStatus("all"); setQuery(""); }} />
+        <NoMatch onReset={() => { setStatus("all"); setChannel("all"); setQuery(""); }} />
       ) : view === "card" ? (
         <CardGrid items={filtered} onOpen={onOpen} />
       ) : (
@@ -83,7 +92,7 @@ function Metrics({ metrics }) {
     <div className="grid grid-cols-4 gap-4">
       <Tile label="Active automations" value={metrics.activeCount.toString()} sub="running now" />
       <Tile label="Contacts in active flows" value={metrics.contactsInFlows.toLocaleString()} sub="currently in some automation" />
-      <Tile label="Messages sent this month" value={metrics.messagesThisMonth.toLocaleString()} sub="WhatsApp messages" />
+      <Tile label="Messages sent this month" value={metrics.messagesThisMonth.toLocaleString()} sub="WhatsApp + Instagram" />
       <Tile label="Total runs this month" value={metrics.runsThisMonth.toLocaleString()} sub="across all automations" />
     </div>
   );
@@ -99,7 +108,7 @@ function Tile({ label, value, sub }) {
   );
 }
 
-function Toolbar({ status, onStatusChange, query, onQueryChange, view, onViewChange }) {
+function Toolbar({ status, onStatusChange, channel, onChannelChange, query, onQueryChange, view, onViewChange }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -108,6 +117,23 @@ function Toolbar({ status, onStatusChange, query, onQueryChange, view, onViewCha
           <input type="text" value={query} onChange={(e) => onQueryChange(e.target.value)} placeholder="Search automations…"
             className="min-w-0 flex-1 bg-transparent text-[13px] text-ink-heading placeholder:text-ink-subtle focus:outline-none" />
         </label>
+        <div className="flex items-center gap-1.5">
+          {CHANNEL_FILTERS.map((c) => {
+            const isActive = channel === c.id;
+            return (
+              <button key={c.id} type="button" onClick={() => onChannelChange(c.id)}
+                className={["inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-[12px] font-medium transition-colors",
+                  isActive
+                    ? c.id === "instagram" ? "border-pink-500 bg-pink-50 text-pink-700"
+                    : c.id === "whatsapp" ? "border-emerald-600 bg-emerald-50 text-emerald-700"
+                    : "border-brand-emerald bg-brand-50 text-brand-emerald"
+                    : "border-line bg-white text-ink-muted hover:bg-surface-subtle"].join(" ")}>
+                <span>{c.icon}</span>{c.label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="mx-1 h-6 w-px bg-line" />
         <div className="flex items-center gap-1.5">
           {STATUS_FILTERS.map((f) => {
             const isActive = status === f.id;
@@ -150,6 +176,9 @@ function CardGrid({ items, onOpen }) {
 function Card({ automation: a, onOpen }) {
   const pill = statusOf(a);
   const trigger = findTriggerById(a.triggerType);
+  const channelPill = a.channel === "instagram"
+    ? { bg: "bg-pink-50", text: "text-pink-700", icon: "📸", label: "Instagram" }
+    : { bg: "bg-emerald-50", text: "text-emerald-700", icon: "💬", label: "WhatsApp" };
   return (
     <article
       onClick={() => onOpen?.(a.id)}
@@ -158,10 +187,13 @@ function Card({ automation: a, onOpen }) {
       className="flex cursor-pointer flex-col gap-3 rounded-md border border-line bg-white p-5 transition-colors hover:border-line-strong hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] focus:outline-none focus-visible:shadow-focus"
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <span className={["inline-flex h-7 items-center gap-1.5 rounded-pill px-2.5 text-[11px] font-semibold", pill.bg, pill.text].join(" ")}>
             <span aria-hidden className={["h-1.5 w-1.5 rounded-full", pill.dot].join(" ")} />
             {pill.label}
+          </span>
+          <span className={["inline-flex h-7 items-center gap-1 rounded-pill px-2 text-[10px] font-semibold", channelPill.bg, channelPill.text].join(" ")} title={channelPill.label}>
+            <span>{channelPill.icon}</span>{channelPill.label}
           </span>
           <span className={["inline-flex h-7 w-7 items-center justify-center rounded-full text-[14px]", trigger?.tone ?? "bg-surface-muted"].join(" ")} title={trigger?.label}>
             {trigger?.icon ?? "⚙️"}
@@ -215,16 +247,24 @@ function TableView({ items, onOpen }) {
       <table className="w-full text-[13px]">
         <thead className="bg-surface-subtle">
           <tr className="text-left text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">
-            <Th>Name</Th><Th>Status</Th><Th>Trigger</Th><Th>Steps</Th>
+            <Th>Name</Th><Th>Channel</Th><Th>Status</Th><Th>Trigger</Th><Th>Steps</Th>
             <Th align="right">Runs (mo)</Th><Th align="right">Success</Th><Th />
           </tr>
         </thead>
         <tbody>
           {items.map((a) => {
             const pill = statusOf(a);
+            const ch = a.channel === "instagram"
+              ? { bg: "bg-pink-50", text: "text-pink-700", icon: "📸", label: "Instagram" }
+              : { bg: "bg-emerald-50", text: "text-emerald-700", icon: "💬", label: "WhatsApp" };
             return (
               <tr key={a.id} onClick={() => onOpen?.(a.id)} className="cursor-pointer border-t border-line hover:bg-surface-subtle">
                 <td className="px-4 py-3"><span className="font-semibold text-ink-heading">{a.name}</span></td>
+                <td className="px-4 py-3">
+                  <span className={["inline-flex h-6 items-center gap-1 rounded-pill px-2 text-[10px] font-semibold", ch.bg, ch.text].join(" ")}>
+                    <span>{ch.icon}</span>{ch.label}
+                  </span>
+                </td>
                 <td className="px-4 py-3">
                   <span className={["inline-flex h-6 items-center gap-1.5 rounded-pill px-2 text-[10px] font-semibold", pill.bg, pill.text].join(" ")}>
                     <span aria-hidden className={["h-1.5 w-1.5 rounded-full", pill.dot].join(" ")} />
