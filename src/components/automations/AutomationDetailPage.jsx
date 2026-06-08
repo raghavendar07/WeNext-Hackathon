@@ -37,7 +37,7 @@ export default function AutomationDetailPage({ automation: a, onBack, onEdit }) 
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" aria-label="More" className="inline-flex h-9 w-9 items-center justify-center rounded-sm border border-line bg-white text-ink-muted hover:bg-surface-subtle">
+          <button type="button" aria-label="More" onClick={() => alert('Detail menu mock')} className="inline-flex h-9 w-9 items-center justify-center rounded-sm border border-line bg-white text-ink-muted hover:bg-surface-subtle">
             <MoreHorizontal size={14} />
           </button>
           <button type="button" onClick={onEdit} className="inline-flex h-10 items-center gap-2 rounded-button bg-cta-gradient px-5 text-[13px] font-semibold text-white hover:opacity-90">
@@ -83,12 +83,12 @@ function StatRow({ a }) {
       <Stat label="Runs (this month)"      value={a.runsThisMonth.toLocaleString()} sparkData={a.series} />
       <Stat label="Currently in flow"      value={a.inProgress.toLocaleString()} />
       <Stat label="Completed (this month)" value={a.completed.toLocaleString()} />
-      <Stat label="Errors"                 value={a.errors.toString()} sub={a.errors > 0 ? "View error log →" : "No errors"} subColor={a.errors > 0 ? "text-danger" : "text-ink-muted"} />
+      <Stat label="Errors"                 value={a.errors.toString()} sub={a.errors > 0 ? "View error log →" : "No errors"} subColor={a.errors > 0 ? "text-danger" : "text-ink-muted"} subOnClick={a.errors > 0 ? () => alert('Error log mock') : undefined} />
     </div>
   );
 }
 
-function Stat({ label, value, sub, subColor, sparkData }) {
+function Stat({ label, value, sub, subColor, sparkData, subOnClick }) {
   return (
     <article className="flex flex-col gap-1.5 rounded-md border border-line bg-white p-5">
       <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">{label}</span>
@@ -96,7 +96,11 @@ function Stat({ label, value, sub, subColor, sparkData }) {
         <span className="text-[24px] font-semibold leading-none text-ink-heading">{value}</span>
         {sparkData && sparkData.length > 0 && <Sparkline data={sparkData} width={70} height={32} />}
       </div>
-      {sub && <span className={["text-[11px] font-medium", subColor ?? "text-ink-muted"].join(" ")}>{sub}</span>}
+      {sub && (subOnClick ? (
+        <button type="button" onClick={subOnClick} className={["text-left text-[11px] font-medium hover:underline", subColor ?? "text-ink-muted"].join(" ")}>{sub}</button>
+      ) : (
+        <span className={["text-[11px] font-medium", subColor ?? "text-ink-muted"].join(" ")}>{sub}</span>
+      ))}
     </article>
   );
 }

@@ -5,7 +5,7 @@ export default function SearchBar({
   placeholder = "Search conversation...",
   value,
   onChange,
-  onFilter,
+  onFilter = () => alert('Filter mock'),
 }) {
   const [internal, setInternal] = useState("");
   const v = value ?? internal;

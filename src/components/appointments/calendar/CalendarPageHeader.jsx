@@ -24,6 +24,7 @@ export default function CalendarPageHeader({ query, onQueryChange }) {
         </label>
         <button
           type="button"
+          onClick={() => alert('Filter — mock')}
           className="inline-flex h-9 items-center gap-2 rounded-sm border border-line bg-white px-3 text-[13px] font-medium text-ink-body hover:bg-surface-subtle"
         >
           <Filter size={14} strokeWidth={1.75} />
@@ -32,12 +33,14 @@ export default function CalendarPageHeader({ query, onQueryChange }) {
         <button
           type="button"
           aria-label="More actions"
+          onClick={() => alert('More actions — mock')}
           className="inline-flex h-9 w-9 items-center justify-center rounded-sm border border-line bg-white text-ink-muted hover:bg-surface-subtle"
         >
           <MoreHorizontal size={16} strokeWidth={1.75} />
         </button>
         <button
           type="button"
+          onClick={() => alert('New appointment — mock')}
           className="inline-flex h-9 items-center gap-2 rounded-sm bg-cta-gradient px-3 text-[13px] font-medium text-white"
         >
           <Plus size={14} strokeWidth={2} />

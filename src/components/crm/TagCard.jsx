@@ -23,6 +23,7 @@ export default function TagCard({ tag }) {
         <button
           type="button"
           aria-label="Tag actions"
+          onClick={() => alert('Tag actions — mock')}
           className="inline-flex h-7 w-7 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-subtle"
         >
           <MoreHorizontal size={16} strokeWidth={1.75} />
@@ -69,6 +70,7 @@ function ActionBtn({ icon: Icon, label, tone }) {
   return (
     <button
       type="button"
+      onClick={() => alert(label + ' — mock')}
       className={[
         "inline-flex h-7 flex-1 items-center justify-center gap-1 rounded-xs border border-line text-[11px] font-medium",
         tone === "brand"

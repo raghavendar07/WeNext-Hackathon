@@ -47,6 +47,7 @@ export default function CampaignCard({ campaign }) {
         <button
           type="button"
           aria-label="Campaign actions"
+          onClick={(e) => { e.stopPropagation(); alert('Menu: edit/duplicate/delete'); }}
           className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-subtle"
         >
           <MoreVertical size={16} strokeWidth={1.75} />

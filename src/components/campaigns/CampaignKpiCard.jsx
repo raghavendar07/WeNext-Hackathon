@@ -9,6 +9,7 @@ export default function CampaignKpiCard({ title, value, suffix, delta }) {
         <button
           type="button"
           aria-label="KPI actions"
+          onClick={() => alert('KPI actions')}
           className="inline-flex h-7 w-7 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-subtle"
         >
           <MoreHorizontal size={16} strokeWidth={1.75} />

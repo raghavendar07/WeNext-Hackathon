@@ -52,6 +52,7 @@ export default function MeetingCard({ meeting }) {
             </h3>
             <button
               type="button"
+              onClick={() => alert('View customer mock')}
               className="text-left text-[12px] font-medium text-ink-muted hover:text-ink-heading"
             >
               {meeting.customer}
@@ -70,6 +71,7 @@ export default function MeetingCard({ meeting }) {
         {meeting.joinable && (
           <button
             type="button"
+            onClick={() => alert('Joining meeting mock')}
             className="inline-flex h-9 items-center gap-2 rounded-button bg-cta-gradient px-3 text-[12px] font-medium text-white"
           >
             <Video size={14} strokeWidth={1.75} />
@@ -79,6 +81,7 @@ export default function MeetingCard({ meeting }) {
         <button
           type="button"
           aria-label="Meeting actions"
+          onClick={() => alert('Meeting menu mock')}
           className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-subtle"
         >
           <MoreHorizontal size={16} strokeWidth={1.75} />

@@ -48,6 +48,7 @@ export default function LeadsTablePage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={() => alert('Filters — mock')}
             className="inline-flex h-9 items-center gap-2 rounded-sm border border-line bg-white px-3 text-[13px] font-medium text-ink-body hover:bg-surface-subtle"
           >
             <Filter size={14} strokeWidth={1.75} />
@@ -55,6 +56,7 @@ export default function LeadsTablePage() {
           </button>
           <button
             type="button"
+            onClick={() => alert('Import Leads — mock')}
             className="inline-flex h-9 items-center gap-2 rounded-sm border border-line bg-white px-3 text-[13px] font-medium text-ink-body hover:bg-surface-subtle"
           >
             <Upload size={14} strokeWidth={1.75} />
@@ -62,6 +64,7 @@ export default function LeadsTablePage() {
           </button>
           <button
             type="button"
+            onClick={() => alert('Add Lead — mock')}
             className="inline-flex h-9 items-center gap-2 rounded-button bg-cta-gradient px-4 text-[13px] font-medium text-white"
           >
             <Plus size={14} strokeWidth={2} />

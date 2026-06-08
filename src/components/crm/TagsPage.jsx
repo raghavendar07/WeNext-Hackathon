@@ -53,6 +53,7 @@ export default function TagsPage() {
           </label>
           <button
             type="button"
+            onClick={() => alert('New Tag — mock')}
             className="inline-flex h-9 items-center gap-2 rounded-button bg-cta-gradient px-4 text-[13px] font-medium text-white"
           >
             <Plus size={14} strokeWidth={2} />

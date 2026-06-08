@@ -64,8 +64,14 @@ export default function CalendarTab() {
         {days.map((d) => {
           const k = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
           const items = postsByDay.get(k) ?? [];
+          const dayLabel = d.toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric" });
           return (
-            <div key={k} className="flex min-h-[200px] flex-col gap-2 rounded-md border border-line bg-white p-3">
+            <div
+              key={k}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); alert('Rescheduled to ' + dayLabel); }}
+              className="flex min-h-[200px] flex-col gap-2 rounded-md border border-line bg-white p-3"
+            >
               <div className="flex items-baseline justify-between">
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">
                   {d.toLocaleString("en-US", { weekday: "short" })}
@@ -78,6 +84,7 @@ export default function CalendarTab() {
                     key={p.id}
                     type="button"
                     draggable
+                    onDragStart={(e) => e.dataTransfer.setData('postId', p.id)}
                     className={[
                       "flex h-6 w-full items-center gap-1 rounded-xs border px-1.5 text-[10px] font-medium",
                       PLATFORM_TONE[p.channels[0]] ?? "border-line bg-canvas text-ink-muted",
@@ -93,7 +100,7 @@ export default function CalendarTab() {
                   </span>
                 )}
                 {items.length === 0 && (
-                  <button type="button" className="rounded-xs border border-dashed border-transparent py-1 text-left text-[11px] font-medium text-ink-subtle hover:border-line hover:text-ink-muted">
+                  <button type="button" onClick={() => alert('Create post on ' + dayLabel)} className="rounded-xs border border-dashed border-transparent py-1 text-left text-[11px] font-medium text-ink-subtle hover:border-line hover:text-ink-muted">
                     + Add post
                   </button>
                 )}

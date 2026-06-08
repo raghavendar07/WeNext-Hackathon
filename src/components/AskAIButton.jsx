@@ -4,7 +4,7 @@ export default function AskAIButton({ onClick }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={onClick ?? (() => alert("Ask AI — mock"))}
       className={[
         "inline-flex items-center gap-[5px] rounded-[46px] px-[15px] py-[10px]",
         "bg-cta-gradient text-white",

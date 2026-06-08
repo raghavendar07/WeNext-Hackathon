@@ -174,7 +174,7 @@ export default function AIComposeStep({ onSubmit }) {
               composerValue={prompt}
               onComposerChange={setPrompt}
               onSubmit={submitPrompt}
-              onAttach={() => {}}
+              onAttach={() => alert('Attach mock')}
               onPromptLibrary={() => setLibraryOpen(true)}
               isListening={isListening}
               onToggleVoice={() => setIsListening((v) => !v)}
@@ -243,7 +243,7 @@ export default function AIComposeStep({ onSubmit }) {
                 value={prompt}
                 onChange={setPrompt}
                 onSubmit={submitPrompt}
-                onAttach={() => {}}
+                onAttach={() => alert('Attach mock')}
                 onPromptLibrary={() => setLibraryOpen(true)}
                 isListening={isListening}
                 onToggleVoice={() => setIsListening((v) => !v)}

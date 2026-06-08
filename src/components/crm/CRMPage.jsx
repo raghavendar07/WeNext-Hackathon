@@ -1,4 +1,4 @@
-import TabBar from "../inbox/TabBar.jsx";
+import PageTabs from "../ui/PageTabs.jsx";
 import LeadBoardPage from "./LeadBoardPage.jsx";
 import LeadsTablePage from "./LeadsTablePage.jsx";
 import CustomersPage from "./CustomersPage.jsx";
@@ -23,7 +23,7 @@ export default function CRMPage({ tab = "lead-board", onTabChange }) {
 
   return (
     <div className="flex h-full flex-col gap-5">
-      <TabBar tabs={CRM_TABS} active={tab} onChange={onTabChange} />
+      <PageTabs tabs={CRM_TABS} active={tab} onChange={onTabChange} />
 
       <header className="flex items-center justify-between gap-4">
         <div className="flex flex-col gap-1">

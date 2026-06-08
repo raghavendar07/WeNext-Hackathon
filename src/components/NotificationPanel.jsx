@@ -133,7 +133,7 @@ function NotificationRow({ item }) {
     <button
       type="button"
       role="menuitem"
-      onClick={item.onClick}
+      onClick={item.onClick ?? (() => alert(item.title))}
       className={[
         "flex min-h-[44px] w-full flex-col items-start gap-0.5 rounded-[8px] px-[10px] py-[8px] text-left",
         "transition-colors duration-150 ease-out hover:bg-[#F3F4F6]",

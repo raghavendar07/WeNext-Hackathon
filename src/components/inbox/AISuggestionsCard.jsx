@@ -14,7 +14,7 @@ export default function AISuggestionsCard({
   onSend,
   onCancel,
   onWriteSomethingElse,
-  onRefresh,
+  onRefresh = () => alert('Refreshing suggestions...'),
 }) {
   return (
     <div className="flex flex-col gap-4 rounded-sm border border-line bg-white p-3 shadow-chip">
@@ -69,8 +69,9 @@ export default function AISuggestionsCard({
         <button
           type="button"
           onClick={() => onSend?.(highlighted ?? 0)}
+          disabled={highlighted == null}
           aria-label="Send selected suggestion"
-          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-cta-gradient opacity-50"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-cta-gradient transition-opacity disabled:opacity-50"
         >
           <ArrowUp size={14} className="text-white" strokeWidth={2} />
         </button>

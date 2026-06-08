@@ -60,7 +60,10 @@ export default function ScheduleMessageDrawer({ open, onClose }) {
     form.message.trim() && form.date && form.timezone && form.time;
 
   const handleSchedule = () => {
-    if (!isValid) return;
+    if (!isValid) {
+      alert("Please fill in message, date, and time before scheduling.");
+      return;
+    }
     const dateLabel = formatDateLabel(form.date);
     const timeLabel = formatTimeLabel(form.time);
     const id = `s-${Date.now()}`;
@@ -76,6 +79,7 @@ export default function ScheduleMessageDrawer({ open, onClose }) {
       ...prev,
     ]);
     setToast(`Message scheduled for ${dateLabel.long} at ${timeLabel}`);
+    alert(`Message scheduled for ${dateLabel.long} at ${timeLabel}`);
     setForm({ message: "", date: "", timezone: form.timezone, time: "" });
     setTab("list");
   };

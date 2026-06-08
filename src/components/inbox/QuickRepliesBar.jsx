@@ -9,10 +9,14 @@ export default function QuickRepliesBar({ onGenerateAI }) {
         </span>
         <Chip>Let's do it!</Chip>
         <Chip>Let's do it!</Chip>
-        <Chip>
+        <button
+          type="button"
+          onClick={() => alert('Add quick reply — mock')}
+          className="inline-flex items-center gap-1 rounded-xs border border-line bg-white px-2 py-1 text-[11px] font-medium text-ink-muted shadow-chip transition-colors hover:bg-canvas"
+        >
           <Plus size={10} className="text-ink-muted" strokeWidth={2} />
           Add
-        </Chip>
+        </button>
       </div>
       <button
         type="button"

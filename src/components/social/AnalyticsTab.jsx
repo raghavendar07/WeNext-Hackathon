@@ -124,7 +124,7 @@ function ChannelCard({ id, accounts }) {
           <span className="text-[13px] font-semibold text-ink-heading">{platform.name}</span>
         </div>
         <p className="mt-3 text-[12px] font-medium text-ink-muted">⊘ Not connected</p>
-        <button type="button" className="mt-3 inline-flex h-9 items-center rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
+        <button type="button" onClick={() => alert('Connect (mock)')} className="mt-3 inline-flex h-9 items-center rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
           Connect →
         </button>
       </article>
@@ -150,7 +150,7 @@ function ChannelCard({ id, accounts }) {
       {bestPost && (
         <div className="mt-3 border-t border-line pt-3">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">Best post</span>
-          <button type="button" className="flex w-full items-center justify-between gap-2 pt-1 text-left">
+          <button type="button" onClick={() => alert('Best post (mock)')} className="flex w-full items-center justify-between gap-2 pt-1 text-left">
             <span className="line-clamp-1 text-[12px] font-medium text-ink-body">"{bestPost.caption}"</span>
             <span className="text-[12px] font-semibold text-brand-emerald">→</span>
           </button>
@@ -417,7 +417,7 @@ function AISuggestions() {
         {ANALYTICS.suggestions.map((s) => (
           <article key={s.id} className="flex items-start justify-between gap-3 rounded-md border-l-4 border-brand-emerald bg-brand-50/30 p-3">
             <p className="flex-1 text-[12px] leading-relaxed text-ink-body">{s.body}</p>
-            <button type="button" className="inline-flex h-9 shrink-0 items-center rounded-button bg-brand-emerald px-3 text-[12px] font-semibold text-white">
+            <button type="button" onClick={() => alert('Apply suggestion (mock)')} className="inline-flex h-9 shrink-0 items-center rounded-button bg-brand-emerald px-3 text-[12px] font-semibold text-white">
               {s.apply}
             </button>
           </article>

@@ -69,6 +69,7 @@ export default function AvailabilitySection() {
                 {idx === 0 && (
                   <button
                     type="button"
+                    onClick={() => alert('Copied to all weekdays (mock)')}
                     className="ml-auto text-[11px] font-semibold text-brand-emerald hover:underline"
                   >
                     Copy to all weekdays
@@ -168,12 +169,14 @@ function FormFooter() {
     <div className="sticky bottom-0 flex items-center justify-end gap-2 border-t border-line bg-white px-6 py-4">
       <button
         type="button"
+        onClick={() => alert('Discarded (mock)')}
         className="rounded-button border border-line bg-white px-4 py-2 text-[13px] font-medium text-ink-body hover:bg-surface-subtle"
       >
         Discard
       </button>
       <button
         type="button"
+        onClick={() => alert('Saved (mock)')}
         className="rounded-button bg-cta-gradient px-4 py-2 text-[13px] font-medium text-white"
       >
         Save changes

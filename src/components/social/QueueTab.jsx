@@ -58,7 +58,7 @@ function PostRow({ post }) {
           <ChannelRow channels={post.channels} />
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-medium text-ink-muted">{formatScheduledTime(post.scheduledFor)}</span>
-            <button type="button" aria-label="Actions" className="inline-flex h-7 w-7 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted">
+            <button type="button" aria-label="Actions" onClick={(e) => { e.stopPropagation(); alert('Row menu mock'); }} className="inline-flex h-7 w-7 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted">
               <MoreHorizontal size={14} />
             </button>
           </div>
@@ -68,15 +68,15 @@ function PostRow({ post }) {
           <StatusLine post={post} />
           <div className="flex items-center gap-1">
             {isFailed ? (
-              <button type="button" className="inline-flex h-8 items-center gap-1 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
+              <button type="button" onClick={() => alert('Try again (mock)')} className="inline-flex h-8 items-center gap-1 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
                 <RefreshCw size={12} /> Try again
               </button>
             ) : (
               <>
-                <button type="button" className="inline-flex h-8 items-center gap-1 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
+                <button type="button" onClick={() => alert('Edit (mock)')} className="inline-flex h-8 items-center gap-1 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
                   <Pencil size={12} /> Edit
                 </button>
-                <button type="button" className="inline-flex h-8 items-center gap-1 rounded-button px-3 text-[12px] font-medium text-ink-muted hover:bg-surface-subtle">
+                <button type="button" onClick={() => alert('Pause (mock)')} className="inline-flex h-8 items-center gap-1 rounded-button px-3 text-[12px] font-medium text-ink-muted hover:bg-surface-subtle">
                   <Pause size={12} /> Pause
                 </button>
               </>
@@ -175,7 +175,7 @@ function RightRail({ accounts }) {
       <section className="flex flex-col gap-3 rounded-md border border-line bg-white p-4">
         <header className="flex items-center justify-between">
           <h3 className="text-[13px] font-semibold text-ink-heading">Accounts</h3>
-          <button type="button" className="text-[11px] font-semibold text-brand-emerald hover:underline">Manage</button>
+          <button type="button" onClick={() => alert('Manage accounts (mock)')} className="text-[11px] font-semibold text-brand-emerald hover:underline">Manage</button>
         </header>
         <div className="flex flex-col gap-2">
           {Object.entries(LOGO_BY_ID).map(([id, Logo]) => {

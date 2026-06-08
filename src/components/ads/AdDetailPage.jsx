@@ -229,6 +229,7 @@ function SuggestionsPanel({ ad }) {
             </div>
             <button
               type="button"
+              onClick={() => alert("Applied (mock)")}
               className="inline-flex h-9 shrink-0 items-center rounded-button bg-brand-emerald px-3 text-[12px] font-semibold text-white"
             >
               {s.apply}
@@ -245,7 +246,11 @@ function CreativeBreakdown({ ad }) {
     <section className="flex flex-col gap-3 rounded-xl border border-line bg-white p-5">
       <header className="flex items-center justify-between">
         <h3 className="text-[14px] font-semibold text-ink-heading">Creative</h3>
-        <button type="button" className="text-[12px] font-semibold text-brand-emerald hover:underline">
+        <button
+          type="button"
+          onClick={() => alert("Edit creative (mock)")}
+          className="text-[12px] font-semibold text-brand-emerald hover:underline"
+        >
           Edit creative →
         </button>
       </header>
@@ -328,7 +333,11 @@ function ChannelsTab({ ad }) {
           {best ? `${findChannel(best)?.label} is performing best. Move budget from underperformers to ${findChannel(best)?.label}?` : "Not enough data yet."}
         </p>
         {best && (
-          <button type="button" className="inline-flex h-9 w-fit items-center rounded-button bg-cta-gradient px-4 text-[12px] font-semibold text-white">
+          <button
+            type="button"
+            onClick={() => alert("Applied suggested split (mock)")}
+            className="inline-flex h-9 w-fit items-center rounded-button bg-cta-gradient px-4 text-[12px] font-semibold text-white"
+          >
             Apply suggested split
           </button>
         )}
@@ -397,7 +406,11 @@ function AudienceTab({ ad }) {
             Based on this data, expand targeting to include {a.interests[0].label} and women 25–34 in {a.cities[0].label}. This could increase your leads by ~30%.
           </p>
         </div>
-        <button type="button" className="inline-flex h-9 items-center rounded-button bg-brand-emerald px-3 text-[12px] font-semibold text-white">
+        <button
+          type="button"
+          onClick={() => alert("Applied audience expansion (mock)")}
+          className="inline-flex h-9 items-center rounded-button bg-brand-emerald px-3 text-[12px] font-semibold text-white"
+        >
           Apply
         </button>
       </section>

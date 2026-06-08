@@ -135,8 +135,9 @@ export default function CalendarWeekView({ activeCategory = "all" }) {
                 return (
                   <div
                     key={`cell-${rowIdx}-${colIdx}`}
+                    onClick={() => alert('Create event mock')}
                     className={[
-                      "relative transition-colors",
+                      "relative cursor-pointer transition-colors",
                       colIdx < 6 ? "border-r border-line" : "",
                       dividerClass,
                       cellBg,

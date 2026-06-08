@@ -55,6 +55,7 @@ export default function CustomersPage() {
         </label>
         <button
           type="button"
+          onClick={() => alert('Add Customer — mock')}
           className="inline-flex h-9 items-center gap-2 rounded-button bg-cta-gradient px-4 text-[13px] font-medium text-white"
         >
           <Plus size={14} strokeWidth={2} />

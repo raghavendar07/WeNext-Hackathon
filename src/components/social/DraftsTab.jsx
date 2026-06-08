@@ -59,10 +59,10 @@ function DraftRow({ post }) {
             Draft · Not scheduled
           </span>
           <div className="flex items-center gap-1">
-            <button type="button" className="inline-flex h-8 items-center gap-1 rounded-button bg-cta-gradient px-3 text-[12px] font-semibold text-white hover:opacity-90">
+            <button type="button" onClick={() => alert('Schedule draft (mock)')} className="inline-flex h-8 items-center gap-1 rounded-button bg-cta-gradient px-3 text-[12px] font-semibold text-white hover:opacity-90">
               <CalendarPlus size={12} /> Schedule
             </button>
-            <button type="button" className="inline-flex h-8 items-center gap-1 rounded-button px-3 text-[12px] font-medium text-danger hover:bg-danger-bg">
+            <button type="button" onClick={() => alert('Delete draft (mock)')} className="inline-flex h-8 items-center gap-1 rounded-button px-3 text-[12px] font-medium text-danger hover:bg-danger-bg">
               <Trash2 size={12} /> Delete
             </button>
           </div>

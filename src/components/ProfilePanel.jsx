@@ -80,16 +80,36 @@ export default function ProfilePanel({
       <div className="my-2 h-px bg-[#DADADA]" />
 
       <div className="flex flex-col gap-0.5">
-        <Item icon={Sparkles} label="Upgrade plan" />
-        <Item icon={Activity} label="Activity" />
-        <Item icon={Settings} label="Settings" />
+        <Item
+          icon={Sparkles}
+          label="Upgrade plan"
+          onClick={() => alert("Upgrade plan — mock")}
+        />
+        <Item
+          icon={Activity}
+          label="Activity"
+          onClick={() => alert("Activity — mock")}
+        />
+        <Item
+          icon={Settings}
+          label="Settings"
+          onClick={() => alert("Settings — mock")}
+        />
       </div>
 
       <div className="my-2 h-px bg-[#DADADA]" />
 
       <div className="flex flex-col gap-0.5">
-        <Item icon={HelpCircle} label="Help" />
-        <Item icon={LogOut} label="Log out" />
+        <Item
+          icon={HelpCircle}
+          label="Help"
+          onClick={() => alert("Help — mock")}
+        />
+        <Item
+          icon={LogOut}
+          label="Log out"
+          onClick={() => alert("Log out — mock")}
+        />
       </div>
     </div>
   );

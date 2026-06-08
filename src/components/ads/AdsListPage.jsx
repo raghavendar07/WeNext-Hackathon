@@ -115,6 +115,8 @@ export default function AdsListPage({ ads = ADS, channel, onChannelChange, onCre
             onQueryChange={setQuery}
             view={view}
             onViewChange={setView}
+            onChannelChange={onChannelChange}
+            onDateChange={(v) => alert(`Date range: ${v} (mock)`)}
           />
 
           {filtered.length === 0 ? (
@@ -206,7 +208,11 @@ function ChannelInsightBanner({ channelId, ads, onDismiss }) {
     <aside className="flex items-start gap-3 rounded-xl border-l-4 border-brand-emerald bg-brand-50/40 p-3">
       <Lightbulb size={16} className="mt-0.5 text-brand-emerald" />
       <p className="flex-1 text-[12px] leading-relaxed text-ink-body">{insight.body}</p>
-      <button type="button" className="text-[12px] font-semibold text-brand-emerald hover:underline">
+      <button
+        type="button"
+        onClick={() => alert("Suggestion details (mock)")}
+        className="text-[12px] font-semibold text-brand-emerald hover:underline"
+      >
         View suggestion
       </button>
       <button
@@ -270,7 +276,7 @@ function MetricTile({ label, value, sub, delta }) {
 
 /* ──────────── Toolbar ──────────── */
 
-function Toolbar({ channel, status, onStatusChange, query, onQueryChange, view, onViewChange }) {
+function Toolbar({ channel, status, onStatusChange, query, onQueryChange, view, onViewChange, onChannelChange, onDateChange }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -304,18 +310,24 @@ function Toolbar({ channel, status, onStatusChange, query, onQueryChange, view, 
             );
           })}
         </div>
-        {!channel && <ChannelDropdown />}
-        <DateRangeDropdown />
+        {!channel && <ChannelDropdown onChange={onChannelChange} />}
+        <DateRangeDropdown onChange={onDateChange} />
       </div>
       <ViewToggle view={view} onChange={onViewChange} />
     </div>
   );
 }
 
-function ChannelDropdown({ count = 0 }) {
+function ChannelDropdown({ count = 0, onChange }) {
   return (
     <button
       type="button"
+      onClick={() => {
+        const v = prompt("Filter by channel (meta / linkedin / tiktok, blank for all):");
+        if (v === null) return;
+        const next = v.trim() === "" ? null : v.trim().toLowerCase();
+        onChange?.(next);
+      }}
       className="inline-flex h-9 items-center gap-2 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle"
     >
       <Filter size={12} className="text-ink-muted" />
@@ -325,10 +337,14 @@ function ChannelDropdown({ count = 0 }) {
   );
 }
 
-function DateRangeDropdown() {
+function DateRangeDropdown({ onChange }) {
   return (
     <button
       type="button"
+      onClick={() => {
+        const v = prompt("Date range (7d / 30d / 90d):", "30d");
+        if (v) onChange?.(v);
+      }}
       className="inline-flex h-9 items-center gap-2 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle"
     >
       Last 30 days
@@ -462,7 +478,10 @@ function AdRow({ ad, channel, onOpen }) {
         <button
           type="button"
           aria-label="Row actions"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            alert("Row menu: pause/delete/duplicate/edit");
+          }}
           className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted"
         >
           <MoreHorizontal size={14} />

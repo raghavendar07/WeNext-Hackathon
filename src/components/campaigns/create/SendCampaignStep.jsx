@@ -188,6 +188,7 @@ function AudienceBlock({ state, update }) {
       action={
         <button
           type="button"
+          onClick={() => alert('Sample.csv downloaded (mock)')}
           className="text-[12px] font-semibold text-brand-emerald hover:underline"
         >
           Download Sample File

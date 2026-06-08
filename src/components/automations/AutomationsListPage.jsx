@@ -119,7 +119,7 @@ function Toolbar({ status, onStatusChange, query, onQueryChange, view, onViewCha
             );
           })}
         </div>
-        <button type="button" className="inline-flex h-9 items-center gap-2 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
+        <button type="button" onClick={() => alert('Trigger filter mock')} className="inline-flex h-9 items-center gap-2 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
           All triggers <ChevronDown size={12} className="text-ink-muted" />
         </button>
       </div>
@@ -167,7 +167,7 @@ function Card({ automation: a, onOpen }) {
             {trigger?.icon ?? "⚙️"}
           </span>
         </div>
-        <button type="button" aria-label="More" onClick={(e) => e.stopPropagation()} className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted">
+        <button type="button" aria-label="More" onClick={(e) => { e.stopPropagation(); alert('Card menu mock'); }} className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted">
           <MoreHorizontal size={14} />
         </button>
       </div>
@@ -190,7 +190,7 @@ function Card({ automation: a, onOpen }) {
           <button type="button" onClick={(e) => { e.stopPropagation(); onOpen?.(a.id); }} className="inline-flex h-8 items-center rounded-button border border-line bg-white px-3 text-[11px] font-medium text-ink-body hover:bg-surface-subtle">
             View
           </button>
-          <button type="button" onClick={(e) => e.stopPropagation()} className="inline-flex h-8 items-center rounded-button px-3 text-[11px] font-medium text-ink-muted hover:bg-surface-subtle">
+          <button type="button" onClick={(e) => { e.stopPropagation(); alert('Edit mock'); }} className="inline-flex h-8 items-center rounded-button px-3 text-[11px] font-medium text-ink-muted hover:bg-surface-subtle">
             Edit
           </button>
         </div>
@@ -236,7 +236,7 @@ function TableView({ items, onOpen }) {
                 <td className="px-4 py-3 text-right font-semibold text-ink-heading">{a.runsThisMonth}</td>
                 <td className="px-4 py-3 text-right text-ink-body">{a.successRate}%</td>
                 <td className="px-2 py-3 text-right">
-                  <button type="button" aria-label="More" onClick={(e) => e.stopPropagation()} className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted">
+                  <button type="button" aria-label="More" onClick={(e) => { e.stopPropagation(); alert('Card menu mock'); }} className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted">
                     <MoreHorizontal size={14} />
                   </button>
                 </td>

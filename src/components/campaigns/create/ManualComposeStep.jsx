@@ -524,6 +524,7 @@ function ActionBar({ step, onPrev, onNext, canNext }) {
     <footer className="flex items-center justify-between border-t border-line bg-white px-6 py-4">
       <button
         type="button"
+        onClick={() => alert('Draft saved (mock)')}
         className="inline-flex h-10 items-center gap-2 rounded-button px-3 text-[13px] font-medium text-ink-body hover:bg-surface-subtle"
       >
         Save Draft

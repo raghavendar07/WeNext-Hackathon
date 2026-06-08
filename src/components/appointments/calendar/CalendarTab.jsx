@@ -13,7 +13,7 @@ export default function CalendarTab() {
       <CalendarDateControls
         view={view}
         onViewChange={setView}
-        onToday={() => {}}
+        onToday={() => alert('Scrolled to today (mock)')}
       />
 
       <div className="pt-1">

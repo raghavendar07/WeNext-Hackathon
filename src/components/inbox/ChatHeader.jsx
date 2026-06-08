@@ -60,10 +60,10 @@ export default function ChatHeader({ contact, popover, onTogglePopover }) {
             anchorRef={priorityRef}
           />
         </div>
-        <IconButton aria-label="Search conversation">
+        <IconButton aria-label="Search conversation" onClick={() => alert('Search mock')}>
           <Search size={20} className="text-ink-muted" strokeWidth={1.75} />
         </IconButton>
-        <IconButton aria-label="More actions">
+        <IconButton aria-label="More actions" onClick={() => alert('Menu mock')}>
           <MoreVertical size={20} className="text-ink-muted" strokeWidth={1.75} />
         </IconButton>
       </div>

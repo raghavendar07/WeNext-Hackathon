@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { Search, Sparkles, Bell, HelpCircle } from "lucide-react";
 import Logo from "./Logo.jsx";
 
 export default function TopNav() {
+  const [query, setQuery] = useState("");
+  const [showNotifications, setShowNotifications] = useState(false);
+
   return (
     <header
       className="fixed inset-x-0 top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-white px-4"
@@ -23,6 +27,14 @@ export default function TopNav() {
           type="search"
           placeholder="Search…"
           aria-label="Search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              alert(`Searching: ${query}`);
+            }
+          }}
           className={[
             "h-9 w-64 rounded-lg bg-[#F9FAFB] pl-8 pr-3 text-[13px] text-ink-900 placeholder:text-ink-500",
             "transition-colors duration-150 ease-out",
@@ -34,6 +46,7 @@ export default function TopNav() {
 
       <button
         type="button"
+        onClick={() => alert("Ask AI — mock")}
         className={[
           "inline-flex h-9 items-center gap-1.5 rounded-lg bg-brand-50 px-3 text-[13px] font-medium text-brand-700",
           "transition-colors duration-150 ease-out hover:bg-brand-100",
@@ -44,17 +57,24 @@ export default function TopNav() {
         Ask AI
       </button>
 
-      <IconButton label="Notifications">
+      <IconButton
+        label="Notifications"
+        onClick={() => {
+          setShowNotifications((v) => !v);
+          alert("Notifications — mock");
+        }}
+      >
         <Bell size={20} strokeWidth={1.75} className="text-ink-700" />
       </IconButton>
 
-      <IconButton label="Help">
+      <IconButton label="Help" onClick={() => alert("Help — mock")}>
         <HelpCircle size={20} strokeWidth={1.75} className="text-ink-700" />
       </IconButton>
 
       <button
         type="button"
         aria-label="Profile"
+        onClick={() => alert("Profile — mock")}
         className={[
           "ml-1 inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-[12px] font-semibold text-brand-700",
           "transition-shadow duration-150 ease-out",
@@ -68,11 +88,12 @@ export default function TopNav() {
   );
 }
 
-function IconButton({ label, children }) {
+function IconButton({ label, children, onClick }) {
   return (
     <button
       type="button"
       aria-label={label}
+      onClick={onClick}
       className={[
         "inline-flex h-9 w-9 items-center justify-center rounded-lg",
         "transition-colors duration-150 ease-out hover:bg-[#F9FAFB]",

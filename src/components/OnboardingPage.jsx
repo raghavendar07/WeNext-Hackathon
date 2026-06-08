@@ -29,6 +29,9 @@ const STEPS = [
 
 export default function OnboardingPage({ onComplete }) {
   const [step, setStep] = useState(0);
+  const [fullName, setFullName] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [email, setEmail] = useState("");
   const total = STEPS.length;
   const current = STEPS[Math.min(step, total - 1)];
   const isLastStep = step >= total - 1;
@@ -39,6 +42,12 @@ export default function OnboardingPage({ onComplete }) {
   }));
 
   const goNext = () => {
+    if (step === 0) {
+      if (!fullName.trim() || !mobile.trim() || !email.trim()) {
+        alert("Please fill Full Name, Mobile Number, and Email ID.");
+        return;
+      }
+    }
     if (isLastStep) {
       onComplete?.();
     } else {
@@ -47,12 +56,18 @@ export default function OnboardingPage({ onComplete }) {
   };
   const goPrev = () => setStep((v) => Math.max(v - 1, 0));
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    goNext();
+  };
+
   return (
     <div className="relative min-h-screen bg-white">
       <div className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between px-[60px] pt-[50px]">
         <Logo className="h-[26px] w-auto" />
         <button
           type="button"
+          onClick={() => alert("Help — coming soon")}
           className="rounded-[46px] border border-[#1EB677] px-[15px] py-[12px] text-[14px] font-medium text-[#1EB677] transition-colors hover:bg-[#ECFDF5]"
         >
           Help
@@ -69,7 +84,10 @@ export default function OnboardingPage({ onComplete }) {
 
         {/* Right form panel */}
         <div className="flex items-center justify-center px-[60px]">
-          <div className="flex w-full max-w-[440px] flex-col gap-[50px]">
+          <form
+            onSubmit={handleSubmit}
+            className="flex w-full max-w-[440px] flex-col gap-[50px]"
+          >
             <div className="flex flex-col gap-[20px]">
               <p
                 className="bg-clip-text text-[14px] font-semibold text-transparent"
@@ -91,17 +109,27 @@ export default function OnboardingPage({ onComplete }) {
             </div>
 
             <div className="flex flex-col gap-[20px]">
-              <Field label="Full Name" placeholder="Enter your name" required />
+              <Field
+                label="Full Name"
+                placeholder="Enter your name"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+              />
               <Field
                 label="Mobile Number"
                 placeholder="+91 9876543210"
                 required
                 helper="Enter the mobile number linked to your WhatsApp"
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
               />
               <Field
                 label="Email ID"
                 placeholder="example@email.com"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
@@ -115,8 +143,7 @@ export default function OnboardingPage({ onComplete }) {
                 ‹ Previous
               </button>
               <button
-                type="button"
-                onClick={goNext}
+                type="submit"
                 className="rounded-[46px] px-[15px] py-[12px] text-[14px] font-medium text-white shadow-[0_0_10px_rgba(1,170,154,0.5)]"
                 style={{
                   backgroundImage:
@@ -126,7 +153,7 @@ export default function OnboardingPage({ onComplete }) {
                 {isLastStep ? "Get started" : "Next ›"}
               </button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
@@ -153,7 +180,7 @@ function BrandCard({ title, subtitle }) {
   );
 }
 
-function Field({ label, placeholder, required, helper }) {
+function Field({ label, placeholder, required, helper, value, onChange }) {
   return (
     <div className="flex flex-col gap-2.5">
       <label className="text-[16px] font-semibold text-[#0F172B]">
@@ -162,6 +189,8 @@ function Field({ label, placeholder, required, helper }) {
       <input
         type="text"
         placeholder={placeholder}
+        value={value}
+        onChange={onChange}
         className="rounded-[100px] border border-[#EDF1F7] bg-[#FBFCFD] px-[21px] py-[16px] text-[14px] font-medium text-[#101828] placeholder:text-[#6A7282] focus:outline-none focus:border-[#1EB677]"
       />
       {helper && (

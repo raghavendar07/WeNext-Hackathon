@@ -7,6 +7,9 @@ import {
   Users,
   CalendarCheck,
   ShoppingBag,
+  Package,
+  Receipt,
+  CreditCard,
   Database,
   FileBarChart2,
   Sparkles,
@@ -15,6 +18,8 @@ import {
   ChevronDown,
   MessageSquare,
   BarChart3,
+  Bot,
+  MessagesSquare,
 } from "lucide-react";
 import notificationIcon from "../assets/notification.svg";
 import Logo from "./Logo.jsx";
@@ -28,6 +33,12 @@ import NotificationPanel from "./NotificationPanel.jsx";
 import SearchInput from "./SearchInput.jsx";
 
 const CRM_TAB_IDS = ["lead-board", "leads", "customers", "tags"];
+const COMMERCE_TAB_IDS = [
+  "commerce-overview",
+  "commerce-catalog",
+  "commerce-orders",
+  "commerce-billing",
+];
 import { WhatsappLogo, InstagramLogo, LinkedinLogo } from "./BrandLogos.jsx";
 
 export default function Sidebar({ active: activeProp, onActiveChange }) {
@@ -170,9 +181,9 @@ export default function Sidebar({ active: activeProp, onActiveChange }) {
         >
           <SubItem
             icon={ShoppingBag}
-            label="Commerce"
-            active={active === "commerce"}
-            onClick={() => setActive("commerce")}
+            label="E-commerce"
+            active={active === "ecommerce"}
+            onClick={() => setActive("ecommerce")}
           />
           <SubItem
             icon={Database}
@@ -180,6 +191,32 @@ export default function Sidebar({ active: activeProp, onActiveChange }) {
             badge="new"
             active={active === "data-store"}
             onClick={() => setActive("data-store")}
+          />
+        </Section>
+
+        <Section
+          label="AI"
+          icon={Bot}
+          open={openSection === "AI"}
+          onToggle={sectionToggle("AI")}
+        >
+          <SubItem
+            icon={Bot}
+            label="AI Agents"
+            active={active === "ai-agents"}
+            onClick={() => setActive("ai-agents")}
+          />
+          <SubItem
+            icon={MessagesSquare}
+            label="Live Chat"
+            active={active === "live-chat"}
+            onClick={() => setActive("live-chat")}
+          />
+          <SubItem
+            icon={WhatsappLogo}
+            label="WhatsApp AI Agent"
+            active={active === "whatsapp-ai-agent"}
+            onClick={() => setActive("whatsapp-ai-agent")}
           />
         </Section>
 

@@ -392,6 +392,10 @@ function Step2({ form, update }) {
                 ))}
                 <button
                   type="button"
+                  onClick={() => {
+                    const v = prompt("Custom budget:");
+                    if (v) update({ budgetAmount: Number(v) });
+                  }}
                   className="inline-flex h-9 items-center rounded-full border border-line bg-white px-4 text-[12px] font-medium text-ink-muted"
                 >
                   Custom
@@ -560,7 +564,7 @@ function Step3({ form, update }) {
         </Field>
 
         <Field label="Media">
-          <Dropzone format={form.format} />
+          <Dropzone format={form.format} update={update} />
           {form.channels.length > 1 && (
             <div className="rounded-md border border-info-border bg-info-bg/40 p-3 text-[12px] text-ink-body">
               💡 Your selected channels need different sizes. Use the same image everywhere (we'll auto-crop), or upload one per channel.
@@ -568,7 +572,7 @@ function Step3({ form, update }) {
           )}
         </Field>
 
-        <Field label="Headline" hint="Short, attention-grabbing. Like a billboard." action={<AiButton field="headline" />}>
+        <Field label="Headline" hint="Short, attention-grabbing. Like a billboard." action={<AiButton field="headline" update={update} />}>
           <CharInput
             value={form.headline} onChange={(v) => update({ headline: v })}
             max={40}
@@ -576,7 +580,7 @@ function Step3({ form, update }) {
           />
         </Field>
 
-        <Field label="Description" hint="What's in it for the customer?" action={<AiButton field="description" />}>
+        <Field label="Description" hint="What's in it for the customer?" action={<AiButton field="description" update={update} />}>
           <CharTextarea
             value={form.description} onChange={(v) => update({ description: v })}
             max={125}
@@ -619,13 +623,29 @@ function Step3({ form, update }) {
           </summary>
           <div className="mt-3 flex flex-col gap-3 text-[12px] font-medium text-ink-muted">
             <Field label="UTM parameters">
-              <input type="text" placeholder="utm_source=meta&utm_campaign=diwali" className="h-10 w-full rounded-sm border border-line bg-white px-3 text-[13px]" />
+              <input
+                type="text"
+                value={form.utm ?? ""}
+                onChange={(e) => update({ utm: e.target.value })}
+                placeholder="utm_source=meta&utm_campaign=diwali"
+                className="h-10 w-full rounded-sm border border-line bg-white px-3 text-[13px]"
+              />
             </Field>
             <Field label="Custom tracking pixel ID">
-              <input type="text" placeholder="123456789" className="h-10 w-full rounded-sm border border-line bg-white px-3 text-[13px]" />
+              <input
+                type="text"
+                value={form.pixelId ?? ""}
+                onChange={(e) => update({ pixelId: e.target.value })}
+                placeholder="123456789"
+                className="h-10 w-full rounded-sm border border-line bg-white px-3 text-[13px]"
+              />
             </Field>
             <Field label="Lead form template">
-              <select className="h-10 w-full rounded-sm border border-line bg-white px-3 text-[13px]">
+              <select
+                value={form.leadForm ?? "None — use destination URL"}
+                onChange={(e) => update({ leadForm: e.target.value })}
+                className="h-10 w-full rounded-sm border border-line bg-white px-3 text-[13px]"
+              >
                 <option>None — use destination URL</option>
                 <option>Quick contact (name + phone)</option>
                 <option>Full inquiry (name, email, message)</option>
@@ -638,10 +658,15 @@ function Step3({ form, update }) {
   );
 }
 
-function AiButton() {
+function AiButton({ field, update }) {
+  const mockText =
+    field === "headline"
+      ? "AI-generated: Boost your sales today!"
+      : "AI-generated: Limited-time festive offers your customers will love. Shop now and save big.";
   return (
     <button
       type="button"
+      onClick={() => update?.({ [field]: mockText })}
       className="inline-flex h-7 items-center gap-1 rounded-xs px-2 text-[11px] font-semibold text-brand-emerald hover:bg-brand-50"
     >
       <Sparkles size={12} />
@@ -650,7 +675,7 @@ function AiButton() {
   );
 }
 
-function Dropzone({ format }) {
+function Dropzone({ format, update }) {
   const hint =
     format === "video" ? "MP4 up to 16 MB · 9:16 vertical recommended" :
     format === "carousel" ? "PNG, JPG up to 5 MB each · 2–10 cards" :
@@ -658,7 +683,15 @@ function Dropzone({ format }) {
     "PNG, JPG up to 5 MB";
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex flex-col items-center justify-center gap-1 rounded-md border border-dashed border-line bg-canvas px-4 py-8 text-center">
+      <div
+        onClick={() => alert("Upload file (mock)")}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault();
+          update?.({ media: "mock-file.png" });
+        }}
+        className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed border-line bg-canvas px-4 py-8 text-center"
+      >
         <UploadCloud size={20} className="text-ink-muted" strokeWidth={1.5} />
         <span className="text-[13px] font-semibold text-ink-heading">Drag & drop your file here, or click to browse</span>
         <span className="text-[11px] font-medium text-ink-muted">{hint}</span>
@@ -749,6 +782,7 @@ function ActionBar({ step, onCancel, onPrev, onNext, canNext, validationHint }) 
     <footer className="flex items-center justify-between border-t border-line bg-white px-6 py-4">
       <button
         type="button"
+        onClick={() => alert("Draft saved (mock)")}
         className="inline-flex h-10 items-center rounded-button px-3 text-[13px] font-medium text-ink-body hover:bg-surface-subtle"
       >
         Save Draft

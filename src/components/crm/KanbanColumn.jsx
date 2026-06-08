@@ -41,6 +41,7 @@ export default function KanbanColumn({
           <button
             type="button"
             aria-label="Search column"
+            onClick={() => alert('Search column — mock')}
             className="inline-flex h-6 w-6 items-center justify-center rounded-xs text-ink-muted hover:bg-white"
           >
             <Search size={12} strokeWidth={1.75} />
@@ -48,6 +49,7 @@ export default function KanbanColumn({
           <button
             type="button"
             aria-label="Add lead to column"
+            onClick={() => alert('Add lead to column — mock')}
             className="inline-flex h-6 w-6 items-center justify-center rounded-xs text-ink-muted hover:bg-white"
           >
             <Plus size={14} strokeWidth={2} />

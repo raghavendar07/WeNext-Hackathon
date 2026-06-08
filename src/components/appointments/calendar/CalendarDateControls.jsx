@@ -25,6 +25,7 @@ export default function CalendarDateControls({ view, onViewChange, onToday }) {
         <ViewSegmentedControl value={view} onChange={onViewChange} />
         <button
           type="button"
+          onClick={() => alert('Date range picker — mock')}
           className="inline-flex h-9 items-center gap-2 rounded-sm border border-line bg-white px-3 text-[13px] font-medium text-ink-body hover:bg-surface-subtle"
         >
           <Calendar size={14} className="text-ink-muted" strokeWidth={1.75} />

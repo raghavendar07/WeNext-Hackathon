@@ -56,6 +56,10 @@ export default function LeadCard({ lead, isDragging, onDragStart, onDragEnd }) {
 
       <button
         type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          alert(lead.action + ' — mock');
+        }}
         className={[
           "inline-flex items-center gap-1 self-start text-[11px] font-semibold",
           actionTone,

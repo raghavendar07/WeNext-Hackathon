@@ -1,7 +1,12 @@
 import { Star } from "lucide-react";
 import DropdownPopover, { PopoverItem } from "./DropdownPopover.jsx";
 
-export default function PriorityPopover({ open, onClose, anchorRef }) {
+export default function PriorityPopover({
+  open,
+  onClose,
+  anchorRef,
+  onSelect = (priority) => alert(`Priority: ${priority} mock`),
+}) {
   return (
     <DropdownPopover open={open} onClose={onClose} anchorRef={anchorRef}>
       <PopoverItem
@@ -18,6 +23,7 @@ export default function PriorityPopover({ open, onClose, anchorRef }) {
           />
         }
         label="Low"
+        onClick={() => onSelect?.("low")}
       />
       <PopoverItem
         icon={
@@ -29,6 +35,7 @@ export default function PriorityPopover({ open, onClose, anchorRef }) {
           />
         }
         label="Medium"
+        onClick={() => onSelect?.("medium")}
       />
       <PopoverItem
         icon={
@@ -40,6 +47,7 @@ export default function PriorityPopover({ open, onClose, anchorRef }) {
           />
         }
         label="High"
+        onClick={() => onSelect?.("high")}
       />
     </DropdownPopover>
   );

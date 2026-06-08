@@ -97,7 +97,7 @@ export default function AIPromptCard({
       <div className="flex items-center gap-3 border-t border-line px-5 py-3">
         <button
           type="button"
-          onClick={onAttach}
+          onClick={onAttach ?? (() => alert('Attach mock'))}
           className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-heading transition-colors hover:text-brand-emerald"
         >
           <Paperclip size={14} strokeWidth={1.75} />

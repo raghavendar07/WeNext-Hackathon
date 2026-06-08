@@ -209,13 +209,17 @@ function CaptionField({ form, update, limit, length }) {
   return (
     <Block heading="Caption" subtitle={`${limit.toLocaleString()} character limit (smallest selected platform)`}>
       <div className="flex items-center gap-1 rounded-sm border border-line bg-surface-subtle px-2 py-1">
-        <ToolbarBtn icon={<Bold size={14} />} label="Bold" />
-        <ToolbarBtn icon={<Italic size={14} />} label="Italic" />
-        <ToolbarBtn icon={<Hash size={14} />} label="Hashtag" />
-        <ToolbarBtn icon={<Smile size={14} />} label="Emoji" />
-        <ToolbarBtn icon={<AtSign size={14} />} label="Mention" />
+        <ToolbarBtn icon={<Bold size={14} />} label="Bold" onClick={() => alert('Format mock')} />
+        <ToolbarBtn icon={<Italic size={14} />} label="Italic" onClick={() => alert('Format mock')} />
+        <ToolbarBtn icon={<Hash size={14} />} label="Hashtag" onClick={() => alert('Format mock')} />
+        <ToolbarBtn icon={<Smile size={14} />} label="Emoji" onClick={() => alert('Format mock')} />
+        <ToolbarBtn icon={<AtSign size={14} />} label="Mention" onClick={() => alert('Format mock')} />
         <span aria-hidden className="mx-1 h-4 w-px bg-line" />
-        <button type="button" className="inline-flex h-7 items-center gap-1 rounded-xs px-2 text-[11px] font-semibold text-brand-emerald hover:bg-brand-50">
+        <button
+          type="button"
+          onClick={() => update({ sharedCaption: 'AI: Try our new collection!' })}
+          className="inline-flex h-7 items-center gap-1 rounded-xs px-2 text-[11px] font-semibold text-brand-emerald hover:bg-brand-50"
+        >
           <Sparkles size={12} /> Generate with AI
         </button>
       </div>
@@ -280,9 +284,9 @@ function PerPlatformCaptions({ form, update }) {
   );
 }
 
-function ToolbarBtn({ icon, label }) {
+function ToolbarBtn({ icon, label, onClick }) {
   return (
-    <button type="button" aria-label={label} className="inline-flex h-7 w-7 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted hover:text-ink-heading">
+    <button type="button" onClick={onClick} aria-label={label} className="inline-flex h-7 w-7 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted hover:text-ink-heading">
       {icon}
     </button>
   );
@@ -294,7 +298,14 @@ function MediaField({ form, update }) {
   const cross = form.channels.length > 1;
   return (
     <Block heading="Media" subtitle="Up to 10 images or 1 video">
-      <div className="flex flex-col items-center gap-1 rounded-md border border-dashed border-line bg-canvas px-4 py-8 text-center">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => alert('Upload mock')}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => { e.preventDefault(); alert('Upload mock'); }}
+        className="flex cursor-pointer flex-col items-center gap-1 rounded-md border border-dashed border-line bg-canvas px-4 py-8 text-center"
+      >
         <UploadCloud size={20} className="text-ink-muted" strokeWidth={1.5} />
         <span className="text-[13px] font-semibold text-ink-heading">Drag & drop your file here, or click to browse</span>
         <span className="text-[11px] font-medium text-ink-muted">JPG, PNG up to 5 MB · MP4 up to 100 MB</span>
@@ -462,7 +473,7 @@ function PreviewRail({ form }) {
 function ActionBar({ canPublish, scheduleMode, onCancel, onPublish }) {
   return (
     <footer className="flex items-center justify-between border-t border-line bg-white px-6 py-4">
-      <button type="button" className="inline-flex h-10 items-center rounded-button px-3 text-[13px] font-medium text-ink-body hover:bg-surface-subtle">
+      <button type="button" onClick={() => alert('Draft saved (mock)')} className="inline-flex h-10 items-center rounded-button px-3 text-[13px] font-medium text-ink-body hover:bg-surface-subtle">
         Save Draft
       </button>
       <div className="flex items-center gap-2">
