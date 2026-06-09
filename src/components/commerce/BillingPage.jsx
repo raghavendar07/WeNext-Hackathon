@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Search,
   MoreHorizontal,
@@ -7,6 +7,9 @@ import {
   TrendingDown,
   Download,
   Send,
+  X,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import {
   PAYMENTS,
@@ -64,6 +67,8 @@ function buildUnified() {
 export default function BillingPage() {
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const metrics = useMemo(() => billingMetrics(PAYMENTS, INVOICES), []);
   const items = useMemo(() => buildUnified(), []);
 
@@ -93,20 +98,27 @@ export default function BillingPage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => alert('Record Payment — mock')}
+            onClick={() => setShowPaymentModal(true)}
             className="inline-flex h-10 items-center gap-2 rounded-button border border-line bg-white px-4 text-[13px] font-semibold text-ink-body hover:bg-surface-subtle"
           >
             + Record Payment
           </button>
           <button
             type="button"
-            onClick={() => alert('Create Invoice — mock')}
+            onClick={() => setShowInvoiceModal(true)}
             className="inline-flex h-10 items-center gap-2 rounded-button bg-cta-gradient px-5 text-[13px] font-semibold text-white hover:opacity-90"
           >
             + Create Invoice
           </button>
         </div>
       </header>
+
+      {showPaymentModal && (
+        <RecordPaymentModal onClose={() => setShowPaymentModal(false)} />
+      )}
+      {showInvoiceModal && (
+        <CreateInvoiceModal onClose={() => setShowInvoiceModal(false)} />
+      )}
 
       <div className="grid grid-cols-4 gap-4">
         <MetricTile
@@ -155,7 +167,10 @@ export default function BillingPage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={query} onChange={setQuery} placeholder="Search by reference or customer…" />
-        <DropdownButton label="Last 30 days" />
+        <DropdownButton
+          label="Last 30 days"
+          options={["Last 7 days", "Last 30 days", "Last 90 days"]}
+        />
       </div>
 
       <div className="overflow-hidden rounded-md border border-line bg-white">
@@ -280,16 +295,53 @@ function SearchBox({ value, onChange, placeholder }) {
   );
 }
 
-function DropdownButton({ label, onClick }) {
+function DropdownButton({ label, options }) {
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState(label);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  const opts = options ?? [];
+
   return (
-    <button
-      type="button"
-      onClick={onClick ?? (() => alert(`${label} — mock`))}
-      className="inline-flex h-9 items-center gap-2 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle"
-    >
-      {label}
-      <ChevronDown size={12} className="text-ink-muted" />
-    </button>
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex h-9 items-center gap-2 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle"
+      >
+        {selected}
+        <ChevronDown size={12} className="text-ink-muted" />
+      </button>
+      {open && opts.length > 0 && (
+        <div className="absolute left-0 top-full z-30 mt-1 min-w-[180px] overflow-hidden rounded-md border border-line bg-white shadow-modal">
+          {opts.map((opt) => {
+            const active = opt === selected;
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => { setSelected(opt); setOpen(false); }}
+                className={[
+                  "flex w-full items-center px-3 py-2 text-left text-[12px] font-medium transition-colors",
+                  active ? "bg-brand-50 text-brand-emerald" : "text-ink-body hover:bg-surface-subtle",
+                ].join(" ")}
+              >
+                {opt}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -311,5 +363,244 @@ function Th({ children, align }) {
     <th className={["px-4 py-3", align === "right" ? "text-right" : "text-left"].join(" ")}>
       {children}
     </th>
+  );
+}
+
+/* ───── Record Payment modal ───── */
+
+function RecordPaymentModal({ onClose }) {
+  const [invoiceId, setInvoiceId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [method, setMethod] = useState("card");
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+
+  const methods = [
+    { id: "card", label: "Card" },
+    { id: "upi",  label: "UPI" },
+    { id: "bank", label: "Bank transfer" },
+    { id: "cash", label: "Cash" },
+  ];
+
+  return (
+    <ModalShell onClose={onClose} title="Record payment" subtitle="Log a payment received outside the platform">
+      <div className="flex flex-col gap-4">
+        <Field label="Invoice ID">
+          <input
+            type="text"
+            value={invoiceId}
+            onChange={(e) => setInvoiceId(e.target.value)}
+            placeholder="INV-1042"
+            className="h-10 w-full rounded-md border border-line bg-white px-3 text-[13px] focus:outline-none focus-visible:shadow-focus"
+          />
+        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Amount (₹)">
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="2450"
+              className="h-10 w-full rounded-md border border-line bg-white px-3 text-[13px] focus:outline-none focus-visible:shadow-focus"
+            />
+          </Field>
+          <Field label="Date">
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="h-10 w-full rounded-md border border-line bg-white px-3 text-[13px] focus:outline-none focus-visible:shadow-focus"
+            />
+          </Field>
+        </div>
+        <Field label="Method">
+          <div className="grid grid-cols-4 gap-2">
+            {methods.map((m) => {
+              const active = method === m.id;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setMethod(m.id)}
+                  className={[
+                    "inline-flex h-10 items-center justify-center rounded-button border text-[12px] font-medium transition-colors",
+                    active
+                      ? "border-brand-emerald bg-brand-50 text-brand-emerald"
+                      : "border-line bg-white text-ink-body hover:bg-surface-subtle",
+                  ].join(" ")}
+                >
+                  {m.label}
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onClick={onClose} className="inline-flex h-10 items-center rounded-button border border-line bg-white px-4 text-[13px] font-semibold text-ink-body hover:bg-surface-subtle">
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => { alert('Payment recorded (mock)'); onClose(); }}
+            className="inline-flex h-10 items-center gap-2 rounded-button bg-cta-gradient px-5 text-[13px] font-semibold text-white hover:opacity-90"
+          >
+            Save payment
+          </button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+/* ───── Create Invoice modal ───── */
+
+function CreateInvoiceModal({ onClose }) {
+  const [customer, setCustomer] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [notes, setNotes] = useState("");
+  const [items, setItems] = useState([
+    { id: 1, description: "Design retainer — June",    amount: 25000 },
+    { id: 2, description: "Add-on social ad creatives", amount: 8500 },
+  ]);
+
+  const updateItem = (id, field, value) => {
+    setItems((arr) => arr.map((it) => (it.id === id ? { ...it, [field]: value } : it)));
+  };
+  const removeItem = (id) => setItems((arr) => arr.filter((it) => it.id !== id));
+  const addItem = () => setItems((arr) => [...arr, { id: Date.now(), description: "", amount: 0 }]);
+
+  const total = items.reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
+
+  return (
+    <ModalShell onClose={onClose} title="Create invoice" subtitle="Send a new invoice to a customer">
+      <div className="flex flex-col gap-4">
+        <Field label="Customer">
+          <input
+            type="text"
+            value={customer}
+            onChange={(e) => setCustomer(e.target.value)}
+            placeholder="e.g. Acme Pvt Ltd"
+            className="h-10 w-full rounded-md border border-line bg-white px-3 text-[13px] focus:outline-none focus-visible:shadow-focus"
+          />
+        </Field>
+
+        <div className="flex flex-col gap-2">
+          <label className="text-[12px] font-semibold text-ink-heading">Items</label>
+          <div className="flex flex-col gap-2 rounded-md border border-line bg-surface-subtle p-3">
+            {items.map((it) => (
+              <div key={it.id} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={it.description}
+                  onChange={(e) => updateItem(it.id, "description", e.target.value)}
+                  placeholder="Description"
+                  className="h-9 flex-1 rounded-md border border-line bg-white px-2.5 text-[12px] focus:outline-none focus-visible:shadow-focus"
+                />
+                <input
+                  type="number"
+                  value={it.amount}
+                  onChange={(e) => updateItem(it.id, "amount", e.target.value)}
+                  placeholder="Amount"
+                  className="h-9 w-[120px] rounded-md border border-line bg-white px-2 text-[12px] focus:outline-none focus-visible:shadow-focus"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeItem(it.id)}
+                  aria-label="Remove item"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addItem}
+              className="inline-flex h-8 items-center gap-1.5 self-start rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle"
+            >
+              <Plus size={12} /> Add item
+            </button>
+          </div>
+          <div className="flex items-center justify-between rounded-md border border-line bg-white px-3 py-2">
+            <span className="text-[12px] font-medium text-ink-muted">Total</span>
+            <span className="text-[14px] font-semibold text-ink-heading">{formatCurrency(total)}</span>
+          </div>
+        </div>
+
+        <Field label="Due date">
+          <input
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            className="h-10 w-full rounded-md border border-line bg-white px-3 text-[13px] focus:outline-none focus-visible:shadow-focus"
+          />
+        </Field>
+
+        <Field label="Notes">
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Payment terms, late fees, etc."
+            rows={3}
+            className="w-full rounded-md border border-line bg-white p-3 text-[13px] focus:outline-none focus-visible:shadow-focus"
+          />
+        </Field>
+
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onClick={onClose} className="inline-flex h-10 items-center rounded-button border border-line bg-white px-4 text-[13px] font-semibold text-ink-body hover:bg-surface-subtle">
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => { alert('Invoice created (mock)'); onClose(); }}
+            className="inline-flex h-10 items-center gap-2 rounded-button bg-cta-gradient px-5 text-[13px] font-semibold text-white hover:opacity-90"
+          >
+            Create invoice
+          </button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-[12px] font-semibold text-ink-heading">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function ModalShell({ onClose, title, subtitle, maxWidth = "max-w-[560px]", children }) {
+  useEffect(() => {
+    const onEsc = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-6" onClick={onClose}>
+      <div
+        className={["w-full overflow-hidden rounded-md bg-white shadow-modal", maxWidth].join(" ")}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="flex items-start justify-between gap-4 border-b border-line p-6">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-[18px] font-semibold text-ink-heading">{title}</h2>
+            {subtitle && <p className="text-[13px] text-ink-muted">{subtitle}</p>}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted"
+          >
+            <X size={16} />
+          </button>
+        </header>
+        <div className="max-h-[70vh] overflow-y-auto p-6">{children}</div>
+      </div>
+    </div>
   );
 }

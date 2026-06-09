@@ -1,24 +1,35 @@
 import { useMemo, useState } from "react";
-import { Filter, Plus, Search, Upload } from "lucide-react";
+import { Filter, Plus, Search, Upload, X, UploadCloud } from "lucide-react";
 import Avatar from "../inbox/Avatar.jsx";
 import IntentBadge from "./IntentBadge.jsx";
 import SourceBadge from "./SourceBadge.jsx";
 import MetricCard from "./MetricCard.jsx";
 import { LEADS } from "./data.js";
 
+const SOURCE_OPTS = ["All", "Website", "Instagram", "WhatsApp", "Ads", "Referral"];
+const OWNER_OPTS = ["All", "Aisha K.", "Rahul V.", "Priya M.", "Karthik R."];
+const STATUS_OPTS = ["All", "Hot", "Warm", "Cold"];
+
 export default function LeadsTablePage() {
   const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState({ status: "All", source: "All", owner: "All" });
+  const [openModal, setOpenModal] = useState(null); // 'filters' | 'import' | 'add'
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return LEADS;
-    return LEADS.filter(
-      (l) =>
-        l.name.toLowerCase().includes(q) ||
-        l.phone.toLowerCase().includes(q) ||
-        l.tags?.some((t) => t.toLowerCase().includes(q)),
-    );
-  }, [query]);
+    return LEADS.filter((l) => {
+      if (q) {
+        const matchQ =
+          l.name.toLowerCase().includes(q) ||
+          l.phone.toLowerCase().includes(q) ||
+          l.tags?.some((t) => t.toLowerCase().includes(q));
+        if (!matchQ) return false;
+      }
+      if (filters.status !== "All" && l.intent !== filters.status.toLowerCase()) return false;
+      if (filters.source !== "All" && l.source !== filters.source.toLowerCase()) return false;
+      return true;
+    });
+  }, [query, filters]);
 
   const newLeads = LEADS.filter((l) => l.stage === "prospects").length;
   const hot = LEADS.filter((l) => l.intent === "hot").length;
@@ -48,7 +59,7 @@ export default function LeadsTablePage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => alert('Filters — mock')}
+            onClick={() => setOpenModal("filters")}
             className="inline-flex h-9 items-center gap-2 rounded-sm border border-line bg-white px-3 text-[13px] font-medium text-ink-body hover:bg-surface-subtle"
           >
             <Filter size={14} strokeWidth={1.75} />
@@ -56,7 +67,7 @@ export default function LeadsTablePage() {
           </button>
           <button
             type="button"
-            onClick={() => alert('Import Leads — mock')}
+            onClick={() => setOpenModal("import")}
             className="inline-flex h-9 items-center gap-2 rounded-sm border border-line bg-white px-3 text-[13px] font-medium text-ink-body hover:bg-surface-subtle"
           >
             <Upload size={14} strokeWidth={1.75} />
@@ -64,7 +75,7 @@ export default function LeadsTablePage() {
           </button>
           <button
             type="button"
-            onClick={() => alert('Add Lead — mock')}
+            onClick={() => setOpenModal("add")}
             className="inline-flex h-9 items-center gap-2 rounded-button bg-cta-gradient px-4 text-[13px] font-medium text-white"
           >
             <Plus size={14} strokeWidth={2} />
@@ -137,6 +148,20 @@ export default function LeadsTablePage() {
           </tbody>
         </table>
       </div>
+
+      {openModal === "filters" && (
+        <FiltersModal
+          filters={filters}
+          onApply={(next) => {
+            setFilters(next);
+            setOpenModal(null);
+          }}
+          onReset={() => setFilters({ status: "All", source: "All", owner: "All" })}
+          onClose={() => setOpenModal(null)}
+        />
+      )}
+      {openModal === "import" && <ImportLeadsModal onClose={() => setOpenModal(null)} />}
+      {openModal === "add" && <AddLeadModal onClose={() => setOpenModal(null)} />}
     </div>
   );
 }
@@ -146,4 +171,229 @@ function Th({ children }) {
 }
 function Td({ children }) {
   return <td className="px-4 py-3 align-middle">{children}</td>;
+}
+
+function Modal({ title, onClose, children, footer }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-lg rounded-[14px] bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-[#E5E7EB] px-5 py-3.5">
+          <h2 className="text-[15px] font-semibold text-[#0F172A]">{title}</h2>
+          <button
+            onClick={onClose}
+            className="rounded p-1.5 text-[#6A6A6A] hover:bg-[#F3F4F6]"
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <div className="px-5 py-5">{children}</div>
+        {footer && (
+          <div className="flex items-center justify-end gap-2 border-t border-[#E5E7EB] px-5 py-3.5">
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FiltersModal({ filters, onApply, onReset, onClose }) {
+  const [local, setLocal] = useState(filters);
+  return (
+    <Modal
+      title="Filter leads"
+      onClose={onClose}
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              onReset();
+              setLocal({ status: "All", source: "All", owner: "All" });
+            }}
+            className="inline-flex h-9 items-center rounded-sm border border-line bg-white px-3 text-[13px] font-medium text-ink-body hover:bg-surface-subtle"
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              console.log("[Filters] applied", local);
+              onApply(local);
+            }}
+            className="inline-flex h-9 items-center rounded-button bg-cta-gradient px-4 text-[13px] font-medium text-white"
+          >
+            Apply
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <Field label="Status">
+          <Select
+            value={local.status}
+            onChange={(v) => setLocal({ ...local, status: v })}
+            options={STATUS_OPTS}
+          />
+        </Field>
+        <Field label="Source">
+          <Select
+            value={local.source}
+            onChange={(v) => setLocal({ ...local, source: v })}
+            options={SOURCE_OPTS}
+          />
+        </Field>
+        <Field label="Owner">
+          <Select
+            value={local.owner}
+            onChange={(v) => setLocal({ ...local, owner: v })}
+            options={OWNER_OPTS}
+          />
+        </Field>
+      </div>
+    </Modal>
+  );
+}
+
+function ImportLeadsModal({ onClose }) {
+  return (
+    <Modal
+      title="Import leads"
+      onClose={onClose}
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-9 items-center rounded-sm border border-line bg-white px-3 text-[13px] font-medium text-ink-body hover:bg-surface-subtle"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              alert("Imported 0 leads (mock)");
+            }}
+            className="inline-flex h-9 items-center rounded-button bg-cta-gradient px-4 text-[13px] font-medium text-white"
+          >
+            Upload
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-line bg-canvas px-6 py-10 text-center">
+          <UploadCloud size={28} className="text-ink-muted" strokeWidth={1.5} />
+          <p className="text-[13px] font-semibold text-ink-heading">Drop CSV here</p>
+          <p className="text-[11px] font-medium text-ink-muted">or click to browse</p>
+        </div>
+        <p className="text-[12px] font-medium text-ink-muted">
+          CSV must include columns: name, phone, email (optional), source.
+        </p>
+        <p className="text-[12px] font-medium text-ink-muted">
+          Up to 10,000 rows per import. Duplicates by phone are skipped.
+        </p>
+      </div>
+    </Modal>
+  );
+}
+
+function AddLeadModal({ onClose }) {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    source: "Website",
+    status: "Warm",
+  });
+  return (
+    <Modal
+      title="Add lead"
+      onClose={onClose}
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-9 items-center rounded-sm border border-line bg-white px-3 text-[13px] font-medium text-ink-body hover:bg-surface-subtle"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              alert(`Saved lead "${form.name || "Untitled"}" (mock)`);
+            }}
+            className="inline-flex h-9 items-center rounded-button bg-cta-gradient px-4 text-[13px] font-medium text-white"
+          >
+            Save
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <Field label="Name">
+          <Input value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="Jane Doe" />
+        </Field>
+        <Field label="Email">
+          <Input value={form.email} onChange={(v) => setForm({ ...form, email: v })} placeholder="jane@acme.com" />
+        </Field>
+        <Field label="Phone">
+          <Input value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} placeholder="+91 90000 00000" />
+        </Field>
+        <Field label="Source">
+          <Select
+            value={form.source}
+            onChange={(v) => setForm({ ...form, source: v })}
+            options={["Website", "Instagram", "WhatsApp", "Referral"]}
+          />
+        </Field>
+        <Field label="Status">
+          <Select
+            value={form.status}
+            onChange={(v) => setForm({ ...form, status: v })}
+            options={["Hot", "Warm", "Cold"]}
+          />
+        </Field>
+      </div>
+    </Modal>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">{label}</span>
+      {children}
+    </label>
+  );
+}
+function Input({ value, onChange, placeholder }) {
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="h-9 rounded-sm border border-line bg-white px-3 text-[13px] font-medium text-ink-heading placeholder:text-ink-subtle focus:border-brand-500 focus:outline-none"
+    />
+  );
+}
+function Select({ value, onChange, options }) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="h-9 rounded-sm border border-line bg-white px-2.5 text-[13px] font-medium text-ink-heading focus:border-brand-500 focus:outline-none"
+    >
+      {options.map((o) => (
+        <option key={o} value={o}>
+          {o}
+        </option>
+      ))}
+    </select>
+  );
 }

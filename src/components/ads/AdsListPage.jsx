@@ -1,15 +1,19 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
+  Copy,
   Filter,
   Globe,
   LayoutGrid,
   Lightbulb,
   MoreHorizontal,
+  Pause,
+  Pencil,
   Search,
   ShoppingBag,
   Sparkles,
   Table as TableIcon,
+  Trash2,
   TrendingDown,
   TrendingUp,
   UserPlus,
@@ -46,6 +50,8 @@ export default function AdsListPage({ ads = ADS, channel, onChannelChange, onCre
   const [query, setQuery] = useState("");
   const [view, setView] = useState("table");
   const [insightDismissed, setInsightDismissed] = useState(false);
+  const [toast, setToast] = useState(null);
+  useEffect(() => { if (toast) { const t = setTimeout(() => setToast(null), 2000); return () => clearTimeout(t); } }, [toast]);
 
   const totalAccountAds = ads.length;
 
@@ -122,13 +128,35 @@ export default function AdsListPage({ ads = ADS, channel, onChannelChange, onCre
           {filtered.length === 0 ? (
             <NoMatchState onReset={() => { setStatus("all"); setQuery(""); }} />
           ) : view === "table" ? (
-            <AdsTable ads={filtered} channel={channel} onOpen={onOpenAd} />
+            <AdsTable ads={filtered} channel={channel} onOpen={onOpenAd} onToast={setToast} />
           ) : (
             <AdsCardGrid ads={filtered} channel={channel} onOpen={onOpenAd} />
           )}
         </>
       )}
+
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 rounded-[8px] bg-[#111827] px-3 py-2 text-[12px] font-semibold text-white shadow-lg">{toast}</div>
+      )}
     </div>
+  );
+}
+
+function DropdownMenu({ open, onClose, anchor = "right", items }) {
+  if (!open) return null;
+  return (
+    <>
+      <div className="fixed inset-0 z-10" onClick={onClose} />
+      <div className={`absolute ${anchor === "right" ? "right-0" : "left-0"} top-full mt-1 z-20 w-44 rounded-[8px] border border-[#E5E7EB] bg-white p-1 shadow-lg`}>
+        {items.map((it, i) => it === "divider" ? (
+          <div key={i} className="my-1 h-px bg-[#F3F4F6]" />
+        ) : (
+          <button key={i} onClick={(e) => { e.stopPropagation(); it.onClick?.(); onClose(); }} className={`flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[12px] font-medium ${it.danger ? "text-red-600 hover:bg-red-50" : "text-[#374151] hover:bg-[#F3F4F6]"}`}>
+            {it.icon}{it.label}
+          </button>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -384,7 +412,7 @@ function ToggleBtn({ active, onClick, ariaLabel, children }) {
 
 /* ──────────── Table ──────────── */
 
-function AdsTable({ ads, channel, onOpen }) {
+function AdsTable({ ads, channel, onOpen, onToast }) {
   const showChannelsCol = !channel;
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-white">
@@ -402,7 +430,7 @@ function AdsTable({ ads, channel, onOpen }) {
         </thead>
         <tbody>
           {ads.map((ad) => (
-            <AdRow key={ad.id} ad={ad} channel={channel} onOpen={onOpen} />
+            <AdRow key={ad.id} ad={ad} channel={channel} onOpen={onOpen} onToast={onToast} />
           ))}
         </tbody>
       </table>
@@ -418,10 +446,11 @@ function Th({ children, align }) {
   );
 }
 
-function AdRow({ ad, channel, onOpen }) {
+function AdRow({ ad, channel, onOpen, onToast }) {
   const goal = findGoal(ad.goalId);
   const pill = STATUS_PILLS[ad.status];
   const showChannelsCol = !channel;
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Channel-scoped numbers when on a channel tab.
   const perChannel = channel ? ad.perChannel?.[channel] : null;
@@ -475,17 +504,28 @@ function AdRow({ ad, channel, onOpen }) {
         </span>
       </td>
       <td className="px-2 py-3 text-right">
-        <button
-          type="button"
-          aria-label="Row actions"
-          onClick={(e) => {
-            e.stopPropagation();
-            alert("Row menu: pause/delete/duplicate/edit");
-          }}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted"
-        >
-          <MoreHorizontal size={14} />
-        </button>
+        <div className="relative inline-block">
+          <button
+            type="button"
+            aria-label="Row actions"
+            onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o); }}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted"
+          >
+            <MoreHorizontal size={14} />
+          </button>
+          <DropdownMenu
+            open={menuOpen}
+            onClose={() => setMenuOpen(false)}
+            anchor="right"
+            items={[
+              { label: "Edit",      icon: <Pencil size={12} />, onClick: () => onToast?.("Opening editor…") },
+              { label: "Duplicate", icon: <Copy size={12} />,   onClick: () => onToast?.("Ad duplicated") },
+              { label: "Pause",     icon: <Pause size={12} />,  onClick: () => onToast?.("Ad paused") },
+              "divider",
+              { label: "Delete",    icon: <Trash2 size={12} />, onClick: () => onToast?.("Ad deleted"), danger: true },
+            ]}
+          />
+        </div>
       </td>
     </tr>
   );

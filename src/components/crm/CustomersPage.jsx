@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 import Avatar from "../inbox/Avatar.jsx";
 import MetricCard from "./MetricCard.jsx";
 import { CUSTOMERS } from "./data.js";
@@ -19,6 +19,7 @@ const ENGAGEMENT = {
 
 export default function CustomersPage() {
   const [query, setQuery] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -55,7 +56,7 @@ export default function CustomersPage() {
         </label>
         <button
           type="button"
-          onClick={() => alert('Add Customer — mock')}
+          onClick={() => setAddOpen(true)}
           className="inline-flex h-9 items-center gap-2 rounded-button bg-cta-gradient px-4 text-[13px] font-medium text-white"
         >
           <Plus size={14} strokeWidth={2} />
@@ -127,7 +128,100 @@ export default function CustomersPage() {
       <p className="text-right text-[11px] font-medium text-ink-muted">
         Total LTV in view: <span className="font-semibold text-ink-heading">${totalLtv.toLocaleString()}</span>
       </p>
+
+      {addOpen && <AddCustomerModal onClose={() => setAddOpen(false)} />}
     </div>
+  );
+}
+
+function Modal({ title, onClose, children, footer }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-lg rounded-[14px] bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-[#E5E7EB] px-5 py-3.5">
+          <h2 className="text-[15px] font-semibold text-[#0F172A]">{title}</h2>
+          <button
+            onClick={onClose}
+            className="rounded p-1.5 text-[#6A6A6A] hover:bg-[#F3F4F6]"
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <div className="px-5 py-5">{children}</div>
+        {footer && (
+          <div className="flex items-center justify-end gap-2 border-t border-[#E5E7EB] px-5 py-3.5">
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AddCustomerModal({ onClose }) {
+  const [form, setForm] = useState({ name: "", email: "", phone: "", company: "" });
+  return (
+    <Modal
+      title="Add customer"
+      onClose={onClose}
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-9 items-center rounded-sm border border-line bg-white px-3 text-[13px] font-medium text-ink-body hover:bg-surface-subtle"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              alert(`Saved customer "${form.name || "Untitled"}" (mock)`);
+            }}
+            className="inline-flex h-9 items-center rounded-button bg-cta-gradient px-4 text-[13px] font-medium text-white"
+          >
+            Save
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <Field label="Name">
+          <Input value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="Jane Doe" />
+        </Field>
+        <Field label="Email">
+          <Input value={form.email} onChange={(v) => setForm({ ...form, email: v })} placeholder="jane@acme.com" />
+        </Field>
+        <Field label="Phone">
+          <Input value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} placeholder="+91 90000 00000" />
+        </Field>
+        <Field label="Company">
+          <Input value={form.company} onChange={(v) => setForm({ ...form, company: v })} placeholder="Acme Inc." />
+        </Field>
+      </div>
+    </Modal>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">{label}</span>
+      {children}
+    </label>
+  );
+}
+function Input({ value, onChange, placeholder }) {
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="h-9 rounded-sm border border-line bg-white px-3 text-[13px] font-medium text-ink-heading placeholder:text-ink-subtle focus:border-brand-500 focus:outline-none"
+    />
   );
 }
 

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Search, MoreHorizontal, ChevronDown, Lightbulb } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Search, MoreHorizontal, ChevronDown, Lightbulb, X, Plus, Trash2 } from "lucide-react";
 import {
   ORDERS,
   ORDER_STATUS_PILLS,
@@ -30,6 +30,7 @@ function writeStatusToURL(status) {
 
 export default function OrdersPage({ onNavigate }) {
   const [status, setStatus] = useState(() => readStatusFromURL());
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     writeStatusToURL(status);
@@ -52,12 +53,16 @@ export default function OrdersPage({ onNavigate }) {
         </div>
         <button
           type="button"
-          onClick={() => alert('Create Order — mock')}
+          onClick={() => setShowCreateModal(true)}
           className="inline-flex h-10 items-center gap-2 rounded-button bg-cta-gradient px-5 text-[13px] font-semibold text-white hover:opacity-90"
         >
           + Create Order
         </button>
       </header>
+
+      {showCreateModal && (
+        <CreateOrderModal onClose={() => setShowCreateModal(false)} />
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         {STATUS_FILTERS.map((f) => {
@@ -101,8 +106,14 @@ function AllOrdersContent() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={query} onChange={setQuery} placeholder="Search by order # or customer…" />
-        <DropdownButton label="Last 30 days" />
-        <DropdownButton label="Sort: Newest" />
+        <DropdownButton
+          label="Last 30 days"
+          options={["Last 7 days", "Last 30 days", "Last 90 days", "All time"]}
+        />
+        <DropdownButton
+          label="Sort: Newest"
+          options={["Sort: Newest", "Sort: Oldest", "Sort: Total (high to low)", "Sort: Total (low to high)"]}
+        />
       </div>
 
       <OrdersTable orders={filtered} />
@@ -152,7 +163,10 @@ function AbandonedContent({ onNavigate }) {
 
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={query} onChange={setQuery} placeholder="Search abandoned carts…" />
-        <DropdownButton label="Last 30 days" />
+        <DropdownButton
+          label="Last 30 days"
+          options={["Last 7 days", "Last 30 days", "Last 90 days", "All time"]}
+        />
       </div>
 
       <OrdersTable orders={filtered} />
@@ -173,7 +187,10 @@ function RefundedContent() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={query} onChange={setQuery} placeholder="Search refunded orders…" />
-        <DropdownButton label="Last 30 days" />
+        <DropdownButton
+          label="Last 30 days"
+          options={["Last 7 days", "Last 30 days", "Last 90 days", "All time"]}
+        />
       </div>
 
       <div className="overflow-hidden rounded-md border border-line bg-white">
@@ -302,16 +319,53 @@ function SearchBox({ value, onChange, placeholder }) {
   );
 }
 
-function DropdownButton({ label, onClick }) {
+function DropdownButton({ label, options }) {
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState(label);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  const opts = options ?? [];
+
   return (
-    <button
-      type="button"
-      onClick={onClick ?? (() => alert(`${label} — mock`))}
-      className="inline-flex h-9 items-center gap-2 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle"
-    >
-      {label}
-      <ChevronDown size={12} className="text-ink-muted" />
-    </button>
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex h-9 items-center gap-2 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle"
+      >
+        {selected}
+        <ChevronDown size={12} className="text-ink-muted" />
+      </button>
+      {open && opts.length > 0 && (
+        <div className="absolute left-0 top-full z-30 mt-1 min-w-[180px] overflow-hidden rounded-md border border-line bg-white shadow-modal">
+          {opts.map((opt) => {
+            const active = opt === selected;
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => { setSelected(opt); setOpen(false); }}
+                className={[
+                  "flex w-full items-center px-3 py-2 text-left text-[12px] font-medium transition-colors",
+                  active ? "bg-brand-50 text-brand-emerald" : "text-ink-body hover:bg-surface-subtle",
+                ].join(" ")}
+              >
+                {opt}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -320,5 +374,155 @@ function Th({ children, align }) {
     <th className={["px-4 py-3", align === "right" ? "text-right" : "text-left"].join(" ")}>
       {children}
     </th>
+  );
+}
+
+/* ───── Create Order modal ───── */
+
+function CreateOrderModal({ onClose }) {
+  const [customer, setCustomer] = useState("");
+  const [notes, setNotes] = useState("");
+  const [items, setItems] = useState([
+    { id: 1, name: "Cold Pressed Almond Oil 500ml", qty: 1, price: 690 },
+    { id: 2, name: "Organic Honey 250g",            qty: 2, price: 320 },
+  ]);
+
+  const updateItem = (id, field, value) => {
+    setItems((arr) => arr.map((it) => (it.id === id ? { ...it, [field]: value } : it)));
+  };
+  const removeItem = (id) => setItems((arr) => arr.filter((it) => it.id !== id));
+  const addItem = () => setItems((arr) => [...arr, { id: Date.now(), name: "", qty: 1, price: 0 }]);
+
+  const total = items.reduce((sum, it) => sum + (Number(it.qty) || 0) * (Number(it.price) || 0), 0);
+
+  return (
+    <ModalShell onClose={onClose} title="Create order" subtitle="Add a new order manually">
+      <div className="flex flex-col gap-4">
+        <Field label="Customer">
+          <input
+            type="text"
+            value={customer}
+            onChange={(e) => setCustomer(e.target.value)}
+            placeholder="e.g. Priya Sharma"
+            className="h-10 w-full rounded-md border border-line bg-white px-3 text-[13px] focus:outline-none focus-visible:shadow-focus"
+          />
+        </Field>
+
+        <div className="flex flex-col gap-2">
+          <label className="text-[12px] font-semibold text-ink-heading">Items</label>
+          <div className="flex flex-col gap-2 rounded-md border border-line bg-surface-subtle p-3">
+            {items.map((it) => (
+              <div key={it.id} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={it.name}
+                  onChange={(e) => updateItem(it.id, "name", e.target.value)}
+                  placeholder="Item name"
+                  className="h-9 flex-1 rounded-md border border-line bg-white px-2.5 text-[12px] focus:outline-none focus-visible:shadow-focus"
+                />
+                <input
+                  type="number"
+                  value={it.qty}
+                  onChange={(e) => updateItem(it.id, "qty", e.target.value)}
+                  placeholder="Qty"
+                  className="h-9 w-[64px] rounded-md border border-line bg-white px-2 text-[12px] focus:outline-none focus-visible:shadow-focus"
+                />
+                <input
+                  type="number"
+                  value={it.price}
+                  onChange={(e) => updateItem(it.id, "price", e.target.value)}
+                  placeholder="Price"
+                  className="h-9 w-[88px] rounded-md border border-line bg-white px-2 text-[12px] focus:outline-none focus-visible:shadow-focus"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeItem(it.id)}
+                  aria-label="Remove item"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addItem}
+              className="inline-flex h-8 items-center gap-1.5 self-start rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle"
+            >
+              <Plus size={12} /> Add item
+            </button>
+          </div>
+          <div className="flex items-center justify-between rounded-md border border-line bg-white px-3 py-2">
+            <span className="text-[12px] font-medium text-ink-muted">Total</span>
+            <span className="text-[14px] font-semibold text-ink-heading">{formatCurrency(total)}</span>
+          </div>
+        </div>
+
+        <Field label="Notes">
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Internal note about this order…"
+            rows={3}
+            className="w-full rounded-md border border-line bg-white p-3 text-[13px] focus:outline-none focus-visible:shadow-focus"
+          />
+        </Field>
+
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onClick={onClose} className="inline-flex h-10 items-center rounded-button border border-line bg-white px-4 text-[13px] font-semibold text-ink-body hover:bg-surface-subtle">
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => { alert('Order created (mock)'); onClose(); }}
+            className="inline-flex h-10 items-center gap-2 rounded-button bg-cta-gradient px-5 text-[13px] font-semibold text-white hover:opacity-90"
+          >
+            Create order
+          </button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-[12px] font-semibold text-ink-heading">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function ModalShell({ onClose, title, subtitle, maxWidth = "max-w-[560px]", children }) {
+  useEffect(() => {
+    const onEsc = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-6" onClick={onClose}>
+      <div
+        className={["w-full overflow-hidden rounded-md bg-white shadow-modal", maxWidth].join(" ")}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="flex items-start justify-between gap-4 border-b border-line p-6">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-[18px] font-semibold text-ink-heading">{title}</h2>
+            {subtitle && <p className="text-[13px] text-ink-muted">{subtitle}</p>}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted"
+          >
+            <X size={16} />
+          </button>
+        </header>
+        <div className="max-h-[70vh] overflow-y-auto p-6">{children}</div>
+      </div>
+    </div>
   );
 }

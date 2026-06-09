@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { CalendarPlus, Clock, MoreHorizontal, Pause, Pencil, RefreshCw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CalendarClock, CalendarPlus, Clock, Copy, MoreHorizontal, Pause, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { InstagramLogo, LinkedinLogo } from "../BrandLogos.jsx";
 import { FacebookLogo } from "./SocialLogos.jsx";
 import { POSTS, dayKey, findPlatform, formatDayHeader, formatRelative, formatScheduledTime } from "./data.js";
@@ -7,6 +7,9 @@ import { POSTS, dayKey, findPlatform, formatDayHeader, formatRelative, formatSch
 const LOGO_BY_ID = { linkedin: LinkedinLogo, facebook: FacebookLogo, instagram: InstagramLogo };
 
 export default function QueueTab({ accounts, onCreate }) {
+  const [toast, setToast] = useState(null);
+  useEffect(() => { if (toast) { const t = setTimeout(() => setToast(null), 2000); return () => clearTimeout(t); } }, [toast]);
+
   const { scheduledByDay } = useMemo(() => {
     const scheduled = POSTS.filter((p) => p.status === "scheduled" || p.status === "failed").sort((a, b) => (a.scheduledFor ?? "").localeCompare(b.scheduledFor ?? ""));
     const map = new Map();
@@ -24,7 +27,8 @@ export default function QueueTab({ accounts, onCreate }) {
     return (
       <div className="grid grid-cols-[1fr_320px] gap-6">
         <EmptyQueue onCreate={onCreate} />
-        <RightRail accounts={accounts} />
+        <RightRail accounts={accounts} onToast={setToast} />
+        {toast && <Toast text={toast} />}
       </div>
     );
   }
@@ -38,17 +42,43 @@ export default function QueueTab({ accounts, onCreate }) {
               {formatDayHeader(day.key)}
             </h2>
             <div className="flex flex-col gap-2">
-              {day.items.map((p) => <PostRow key={p.id} post={p} />)}
+              {day.items.map((p) => <PostRow key={p.id} post={p} onToast={setToast} />)}
             </div>
           </section>
         ))}
       </div>
-      <RightRail accounts={accounts} />
+      <RightRail accounts={accounts} onToast={setToast} />
+      {toast && <Toast text={toast} />}
     </div>
   );
 }
 
-function PostRow({ post }) {
+function Toast({ text }) {
+  return (
+    <div className="fixed top-4 right-4 z-50 rounded-[8px] bg-[#111827] px-3 py-2 text-[12px] font-semibold text-white shadow-lg">{text}</div>
+  );
+}
+
+function DropdownMenu({ open, onClose, anchor = "right", items }) {
+  if (!open) return null;
+  return (
+    <>
+      <div className="fixed inset-0 z-10" onClick={onClose} />
+      <div className={`absolute ${anchor === "right" ? "right-0" : "left-0"} top-full mt-1 z-20 w-44 rounded-[8px] border border-[#E5E7EB] bg-white p-1 shadow-lg`}>
+        {items.map((it, i) => it === "divider" ? (
+          <div key={i} className="my-1 h-px bg-[#F3F4F6]" />
+        ) : (
+          <button key={i} onClick={() => { it.onClick?.(); onClose(); }} className={`flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[12px] font-medium ${it.danger ? "text-red-600 hover:bg-red-50" : "text-[#374151] hover:bg-[#F3F4F6]"}`}>
+            {it.icon}{it.label}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function PostRow({ post, onToast }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const isFailed = post.status === "failed";
   return (
     <article className="flex items-start gap-3 rounded-md border border-line bg-white p-4">
@@ -58,9 +88,24 @@ function PostRow({ post }) {
           <ChannelRow channels={post.channels} />
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-medium text-ink-muted">{formatScheduledTime(post.scheduledFor)}</span>
-            <button type="button" aria-label="Actions" onClick={(e) => { e.stopPropagation(); alert('Row menu mock'); }} className="inline-flex h-7 w-7 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted">
-              <MoreHorizontal size={14} />
-            </button>
+            <div className="relative">
+              <button type="button" aria-label="Actions" onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o); }} className="inline-flex h-7 w-7 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted">
+                <MoreHorizontal size={14} />
+              </button>
+              <DropdownMenu
+                open={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                anchor="right"
+                items={[
+                  { label: "Edit",       icon: <Pencil size={12} />,        onClick: () => onToast?.("Opening editor…") },
+                  { label: "Duplicate",  icon: <Copy size={12} />,          onClick: () => onToast?.("Post duplicated") },
+                  { label: "Reschedule", icon: <CalendarClock size={12} />, onClick: () => onToast?.("Reschedule (mock)") },
+                  { label: "Pause",      icon: <Pause size={12} />,         onClick: () => onToast?.("Post paused") },
+                  "divider",
+                  { label: "Delete",     icon: <Trash2 size={12} />,        onClick: () => onToast?.("Post deleted"), danger: true },
+                ]}
+              />
+            </div>
           </div>
         </div>
         <p className="line-clamp-2 text-[13px] leading-snug text-ink-body">{post.caption}</p>
@@ -68,15 +113,15 @@ function PostRow({ post }) {
           <StatusLine post={post} />
           <div className="flex items-center gap-1">
             {isFailed ? (
-              <button type="button" onClick={() => alert('Try again (mock)')} className="inline-flex h-8 items-center gap-1 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
+              <button type="button" onClick={() => onToast?.("Retrying post…")} className="inline-flex h-8 items-center gap-1 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
                 <RefreshCw size={12} /> Try again
               </button>
             ) : (
               <>
-                <button type="button" onClick={() => alert('Edit (mock)')} className="inline-flex h-8 items-center gap-1 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
+                <button type="button" onClick={() => onToast?.("Opening editor…")} className="inline-flex h-8 items-center gap-1 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
                   <Pencil size={12} /> Edit
                 </button>
-                <button type="button" onClick={() => alert('Pause (mock)')} className="inline-flex h-8 items-center gap-1 rounded-button px-3 text-[12px] font-medium text-ink-muted hover:bg-surface-subtle">
+                <button type="button" onClick={() => onToast?.("Post paused")} className="inline-flex h-8 items-center gap-1 rounded-button px-3 text-[12px] font-medium text-ink-muted hover:bg-surface-subtle">
                   <Pause size={12} /> Pause
                 </button>
               </>
@@ -163,7 +208,7 @@ function StatusLine({ post }) {
   );
 }
 
-function RightRail({ accounts }) {
+function RightRail({ accounts, onToast }) {
   const counts = useMemo(() => ({
     scheduled: POSTS.filter((p) => p.status === "scheduled").length,
     published: POSTS.filter((p) => p.status === "published").length,
@@ -175,7 +220,7 @@ function RightRail({ accounts }) {
       <section className="flex flex-col gap-3 rounded-md border border-line bg-white p-4">
         <header className="flex items-center justify-between">
           <h3 className="text-[13px] font-semibold text-ink-heading">Accounts</h3>
-          <button type="button" onClick={() => alert('Manage accounts (mock)')} className="text-[11px] font-semibold text-brand-emerald hover:underline">Manage</button>
+          <button type="button" onClick={() => onToast?.("Opens Connect accounts modal (mock)")} className="text-[11px] font-semibold text-brand-emerald hover:underline">Manage</button>
         </header>
         <div className="flex flex-col gap-2">
           {Object.entries(LOGO_BY_ID).map(([id, Logo]) => {

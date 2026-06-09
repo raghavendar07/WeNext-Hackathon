@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Heart, MessageCircle, Send, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Heart, MessageCircle, Send, Sparkles, TrendingDown, TrendingUp, X } from "lucide-react";
 import { InstagramLogo, LinkedinLogo } from "../BrandLogos.jsx";
 import { FacebookLogo } from "./SocialLogos.jsx";
 import Sparkline from "../ads/Sparkline.jsx";
@@ -34,14 +34,114 @@ const METRICS = [
 
 export default function AnalyticsTab({ accounts }) {
   const [range, setRange] = useState("30d");
+  const [connectPlatform, setConnectPlatform] = useState(null);
+  const [previewPost, setPreviewPost] = useState(null);
+  const [toast, setToast] = useState(null);
+  useEffect(() => { if (toast) { const t = setTimeout(() => setToast(null), 2000); return () => clearTimeout(t); } }, [toast]);
+
   return (
     <div className="flex flex-col gap-10">
       <HeroRow range={range} onRangeChange={setRange} />
-      <ChannelBreakdown accounts={accounts} />
+      <ChannelBreakdown accounts={accounts} onConnect={setConnectPlatform} onPreview={setPreviewPost} />
       <PerformanceOverTime accounts={accounts} />
       <TopPosts />
       <AudienceInsights />
-      <AISuggestions />
+      <AISuggestions onApplied={() => setToast("Applied")} />
+      {connectPlatform && (
+        <ConnectPlatformModal
+          platformId={connectPlatform}
+          onClose={() => setConnectPlatform(null)}
+          onConnect={() => { setConnectPlatform(null); setToast("Connection requested"); }}
+        />
+      )}
+      {previewPost && (
+        <PostPreviewModal post={previewPost} onClose={() => setPreviewPost(null)} />
+      )}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 rounded-[8px] bg-[#111827] px-3 py-2 text-[12px] font-semibold text-white shadow-lg">{toast}</div>
+      )}
+    </div>
+  );
+}
+
+function ConnectPlatformModal({ platformId, onClose, onConnect }) {
+  const platform = findPlatform(platformId);
+  const Logo = LOGO_BY_ID[platformId];
+  const [apiKey, setApiKey] = useState("");
+  return (
+    <div role="dialog" aria-modal="true" onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
+      <div onClick={(e) => e.stopPropagation()} className="flex w-full max-w-[420px] flex-col gap-4 rounded-md border border-line bg-white p-6 shadow-card">
+        <header className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-[16px] font-semibold text-ink-heading">Connect {platform?.name}</h3>
+            <p className="text-[12px] font-medium text-ink-muted">Authenticate to pull analytics and publish posts.</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close" className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted">
+            <X size={16} />
+          </button>
+        </header>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">Platform</label>
+            <span className="inline-flex w-fit items-center gap-2 rounded-pill bg-surface-muted px-3 py-1.5 text-[12px] font-semibold text-ink-heading">
+              {Logo && <Logo size={14} />}
+              {platform?.name}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">API key</label>
+            <input
+              type="text"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="pk_live_••••••••"
+              className="h-10 rounded-sm border border-line bg-white px-3 text-[13px] text-ink-heading placeholder:text-ink-subtle focus:outline-none"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 border-t border-line pt-3">
+          <button type="button" onClick={onClose} className="inline-flex h-10 items-center rounded-button border border-line bg-white px-4 text-[13px] font-medium text-ink-body hover:bg-surface-subtle">Cancel</button>
+          <button type="button" onClick={onConnect} className="inline-flex h-10 items-center rounded-button bg-cta-gradient px-5 text-[13px] font-semibold text-white">Connect</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PostPreviewModal({ post, onClose }) {
+  const Logo = LOGO_BY_ID[post.channels[0]];
+  const e = post.engagement ?? {};
+  return (
+    <div role="dialog" aria-modal="true" onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
+      <div onClick={(ev) => ev.stopPropagation()} className="flex w-full max-w-[420px] flex-col gap-4 rounded-md border border-line bg-white p-6 shadow-card">
+        <header className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2">
+            {Logo && <Logo size={16} />}
+            <h3 className="text-[15px] font-semibold text-ink-heading">Top post preview</h3>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close" className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted">
+            <X size={16} />
+          </button>
+        </header>
+        <div className="flex aspect-square w-full items-center justify-center rounded-md bg-surface-muted text-[72px]">
+          {post.media?.thumb ?? "📝"}
+        </div>
+        <p className="text-[13px] leading-relaxed text-ink-body">{post.caption}</p>
+        <div className="grid grid-cols-3 gap-2 border-t border-line pt-3 text-center">
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-ink-muted"><Heart size={11} /> Likes</span>
+            <span className="text-[14px] font-semibold text-ink-heading">{e.likes ?? 0}</span>
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-ink-muted"><MessageCircle size={11} /> Comments</span>
+            <span className="text-[14px] font-semibold text-ink-heading">{e.comments ?? 0}</span>
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-ink-muted"><Send size={11} /> Shares</span>
+            <span className="text-[14px] font-semibold text-ink-heading">{e.shares ?? 0}</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -92,20 +192,20 @@ function HeroTile({ label, value, delta, spark }) {
 
 /* ──────────── Channel breakdown ──────────── */
 
-function ChannelBreakdown({ accounts }) {
+function ChannelBreakdown({ accounts, onConnect, onPreview }) {
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-[14px] font-semibold text-ink-heading">How each channel is performing</h2>
       <div className="grid grid-cols-3 gap-4">
         {Object.keys(LOGO_BY_ID).map((id) => (
-          <ChannelCard key={id} id={id} accounts={accounts} />
+          <ChannelCard key={id} id={id} accounts={accounts} onConnect={onConnect} onPreview={onPreview} />
         ))}
       </div>
     </section>
   );
 }
 
-function ChannelCard({ id, accounts }) {
+function ChannelCard({ id, accounts, onConnect, onPreview }) {
   const Logo = LOGO_BY_ID[id];
   const platform = findPlatform(id);
   const acct = accounts[id];
@@ -124,7 +224,7 @@ function ChannelCard({ id, accounts }) {
           <span className="text-[13px] font-semibold text-ink-heading">{platform.name}</span>
         </div>
         <p className="mt-3 text-[12px] font-medium text-ink-muted">⊘ Not connected</p>
-        <button type="button" onClick={() => alert('Connect (mock)')} className="mt-3 inline-flex h-9 items-center rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
+        <button type="button" onClick={() => onConnect?.(id)} className="mt-3 inline-flex h-9 items-center rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
           Connect →
         </button>
       </article>
@@ -150,7 +250,7 @@ function ChannelCard({ id, accounts }) {
       {bestPost && (
         <div className="mt-3 border-t border-line pt-3">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">Best post</span>
-          <button type="button" onClick={() => alert('Best post (mock)')} className="flex w-full items-center justify-between gap-2 pt-1 text-left">
+          <button type="button" onClick={() => onPreview?.(bestPost)} className="flex w-full items-center justify-between gap-2 pt-1 text-left">
             <span className="line-clamp-1 text-[12px] font-medium text-ink-body">"{bestPost.caption}"</span>
             <span className="text-[12px] font-semibold text-brand-emerald">→</span>
           </button>
@@ -406,7 +506,8 @@ function heatColor(v) {
 
 /* ──────────── AI suggestions ──────────── */
 
-function AISuggestions() {
+function AISuggestions({ onApplied }) {
+  const [applied, setApplied] = useState(new Set());
   return (
     <section className="flex flex-col gap-3 rounded-md border border-line bg-white p-5">
       <header className="flex items-center gap-2">
@@ -414,14 +515,25 @@ function AISuggestions() {
         <h3 className="text-[14px] font-semibold text-ink-heading">Suggestions to grow</h3>
       </header>
       <div className="flex flex-col gap-2">
-        {ANALYTICS.suggestions.map((s) => (
-          <article key={s.id} className="flex items-start justify-between gap-3 rounded-md border-l-4 border-brand-emerald bg-brand-50/30 p-3">
-            <p className="flex-1 text-[12px] leading-relaxed text-ink-body">{s.body}</p>
-            <button type="button" onClick={() => alert('Apply suggestion (mock)')} className="inline-flex h-9 shrink-0 items-center rounded-button bg-brand-emerald px-3 text-[12px] font-semibold text-white">
-              {s.apply}
-            </button>
-          </article>
-        ))}
+        {ANALYTICS.suggestions.map((s) => {
+          const isApplied = applied.has(s.id);
+          return (
+            <article key={s.id} className="flex items-start justify-between gap-3 rounded-md border-l-4 border-brand-emerald bg-brand-50/30 p-3">
+              <p className={["flex-1 text-[12px] leading-relaxed", isApplied ? "text-ink-muted line-through" : "text-ink-body"].join(" ")}>{s.body}</p>
+              <button
+                type="button"
+                disabled={isApplied}
+                onClick={() => {
+                  setApplied((prev) => new Set(prev).add(s.id));
+                  onApplied?.();
+                }}
+                className={["inline-flex h-9 shrink-0 items-center rounded-button px-3 text-[12px] font-semibold text-white", isApplied ? "bg-ink-subtle cursor-not-allowed" : "bg-brand-emerald"].join(" ")}
+              >
+                {isApplied ? "Applied" : s.apply}
+              </button>
+            </article>
+          );
+        })}
       </div>
     </section>
   );

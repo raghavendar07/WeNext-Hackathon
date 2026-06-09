@@ -12,13 +12,14 @@ const ACTION_TONE = {
   "Onboard":        "text-brand-emerald",
 };
 
-export default function LeadCard({ lead, isDragging, onDragStart, onDragEnd }) {
+export default function LeadCard({ lead, isDragging, onDragStart, onDragEnd, onAction, onOpen }) {
   const visibleTags = (lead.tags ?? []).slice(0, 2);
   const actionTone = ACTION_TONE[lead.action] ?? "text-brand-emerald";
 
   return (
     <article
       draggable
+      onClick={() => onOpen?.(lead)}
       onDragStart={(e) => {
         e.dataTransfer.effectAllowed = "move";
         e.dataTransfer.setData("text/plain", lead.id);
@@ -58,7 +59,8 @@ export default function LeadCard({ lead, isDragging, onDragStart, onDragEnd }) {
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          alert(lead.action + ' — mock');
+          if (onAction) onAction(lead);
+          else alert(lead.action + ' — mock');
         }}
         className={[
           "inline-flex items-center gap-1 self-start text-[11px] font-semibold",

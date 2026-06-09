@@ -1,4 +1,5 @@
-import { Mail, MoreVertical } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Copy, Eye, Mail, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import StatusPill from "./StatusPill.jsx";
 import KPIMetric from "./KPIMetric.jsx";
 
@@ -13,6 +14,9 @@ const CATEGORY_TINTS = {
 export default function CampaignCard({ campaign }) {
   const tint = CATEGORY_TINTS[campaign.category] ?? CATEGORY_TINTS.email;
   const Icon = campaign.icon ?? Mail;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [toast, setToast] = useState(null);
+  useEffect(() => { if (toast) { const t = setTimeout(() => setToast(null), 2000); return () => clearTimeout(t); } }, [toast]);
 
   return (
     <article className="flex flex-col gap-4 rounded-md border border-line bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
@@ -44,15 +48,33 @@ export default function CampaignCard({ campaign }) {
           </div>
         </div>
 
-        <button
-          type="button"
-          aria-label="Campaign actions"
-          onClick={(e) => { e.stopPropagation(); alert('Menu: edit/duplicate/delete'); }}
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-subtle"
-        >
-          <MoreVertical size={16} strokeWidth={1.75} />
-        </button>
+        <div className="relative">
+          <button
+            type="button"
+            aria-label="Campaign actions"
+            onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o); }}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-subtle"
+          >
+            <MoreVertical size={16} strokeWidth={1.75} />
+          </button>
+          <DropdownMenu
+            open={menuOpen}
+            onClose={() => setMenuOpen(false)}
+            anchor="right"
+            items={[
+              { label: "View",      icon: <Eye size={12} />,    onClick: () => setToast("Opening campaign…") },
+              { label: "Edit",      icon: <Pencil size={12} />, onClick: () => setToast("Opening editor…") },
+              { label: "Duplicate", icon: <Copy size={12} />,   onClick: () => setToast("Campaign duplicated") },
+              "divider",
+              { label: "Delete",    icon: <Trash2 size={12} />, onClick: () => setToast("Campaign deleted"), danger: true },
+            ]}
+          />
+        </div>
       </div>
+
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 rounded-[8px] bg-[#111827] px-3 py-2 text-[12px] font-semibold text-white shadow-lg">{toast}</div>
+      )}
 
       {/* Row 2 — KPI metrics */}
       <div className="flex divide-x divide-line">
@@ -62,6 +84,24 @@ export default function CampaignCard({ campaign }) {
         <KPIMetric value={campaign.kpis.converted} name="Converted" />
       </div>
     </article>
+  );
+}
+
+function DropdownMenu({ open, onClose, anchor = "right", items }) {
+  if (!open) return null;
+  return (
+    <>
+      <div className="fixed inset-0 z-10" onClick={onClose} />
+      <div className={`absolute ${anchor === "right" ? "right-0" : "left-0"} top-full mt-1 z-20 w-44 rounded-[8px] border border-[#E5E7EB] bg-white p-1 shadow-lg`}>
+        {items.map((it, i) => it === "divider" ? (
+          <div key={i} className="my-1 h-px bg-[#F3F4F6]" />
+        ) : (
+          <button key={i} onClick={() => { it.onClick?.(); onClose(); }} className={`flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[12px] font-medium ${it.danger ? "text-red-600 hover:bg-red-50" : "text-[#374151] hover:bg-[#F3F4F6]"}`}>
+            {it.icon}{it.label}
+          </button>
+        ))}
+      </div>
+    </>
   );
 }
 

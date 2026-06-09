@@ -2,14 +2,50 @@ import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   ChevronLeft,
+  Copy,
+  FlaskConical,
   MoreHorizontal,
   Pencil,
   RefreshCw,
   Sparkles,
+  Trash2,
   TrendingUp,
+  X,
 } from "lucide-react";
 import Sparkline from "../ads/Sparkline.jsx";
 import { statusOf } from "./data.js";
+
+const MOCK_ERROR_LOG = [
+  { id: "e1", timestamp: "2026-06-09 14:32:11", reason: "WhatsApp template rejected by Meta" },
+  { id: "e2", timestamp: "2026-06-09 11:08:44", reason: "Contact unsubscribed mid-flow" },
+  { id: "e3", timestamp: "2026-06-08 22:14:09", reason: "Webhook timeout after 30s" },
+  { id: "e4", timestamp: "2026-06-08 17:51:33", reason: "Invalid phone number format" },
+  { id: "e5", timestamp: "2026-06-08 09:02:50", reason: "Rate limit exceeded on WhatsApp API" },
+  { id: "e6", timestamp: "2026-06-07 20:46:18", reason: "Template variable {{name}} missing" },
+];
+
+function DropdownMenu({ open, onClose, anchor = "right", items }) {
+  if (!open) return null;
+  return (
+    <>
+      <div className="fixed inset-0 z-10" onClick={onClose} />
+      <div className={`absolute ${anchor === "right" ? "right-0" : "left-0"} top-full mt-1 z-20 w-44 rounded-[8px] border border-[#E5E7EB] bg-white p-1 shadow-lg`}>
+        {items.map((it, i) => it === "divider" ? (
+          <div key={i} className="my-1 h-px bg-[#F3F4F6]" />
+        ) : (
+          <button
+            key={i}
+            type="button"
+            onClick={(e) => { e.stopPropagation(); it.onClick?.(); onClose(); }}
+            className={`flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[12px] font-medium ${it.danger ? "text-red-600 hover:bg-red-50" : "text-[#374151] hover:bg-[#F3F4F6]"}`}
+          >
+            {it.icon}{it.label}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
 
 const TABS = [
   { id: "performance", label: "Performance" },
@@ -20,7 +56,17 @@ const TABS = [
 
 export default function AutomationDetailPage({ automation: a, onBack, onEdit }) {
   const [tab, setTab] = useState("performance");
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+  const [errorLogOpen, setErrorLogOpen] = useState(false);
   const pill = statusOf(a);
+
+  const headerMenuItems = [
+    { label: "Edit",      icon: <Pencil size={12} />,        onClick: () => onEdit?.() },
+    { label: "Duplicate", icon: <Copy size={12} />,          onClick: () => {} },
+    { label: "Test",      icon: <FlaskConical size={12} />,  onClick: () => {} },
+    "divider",
+    { label: "Delete",    icon: <Trash2 size={12} />,        danger: true, onClick: () => {} },
+  ];
 
   return (
     <div className="flex flex-col gap-10">
@@ -37,9 +83,22 @@ export default function AutomationDetailPage({ automation: a, onBack, onEdit }) 
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" aria-label="More" onClick={() => alert('Detail menu mock')} className="inline-flex h-9 w-9 items-center justify-center rounded-sm border border-line bg-white text-ink-muted hover:bg-surface-subtle">
-            <MoreHorizontal size={14} />
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              aria-label="More"
+              onClick={() => setHeaderMenuOpen((v) => !v)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-sm border border-line bg-white text-ink-muted hover:bg-surface-subtle"
+            >
+              <MoreHorizontal size={14} />
+            </button>
+            <DropdownMenu
+              open={headerMenuOpen}
+              onClose={() => setHeaderMenuOpen(false)}
+              anchor="right"
+              items={headerMenuItems}
+            />
+          </div>
           <button type="button" onClick={onEdit} className="inline-flex h-10 items-center gap-2 rounded-button bg-cta-gradient px-5 text-[13px] font-semibold text-white hover:opacity-90">
             <Pencil size={12} /> Edit Flow
           </button>
@@ -47,7 +106,7 @@ export default function AutomationDetailPage({ automation: a, onBack, onEdit }) 
       </header>
 
       <Hero a={a} />
-      <StatRow a={a} />
+      <StatRow a={a} onViewErrorLog={() => setErrorLogOpen(true)} />
 
       <div className="flex flex-col gap-6">
         <Tabs tab={tab} onChange={setTab} />
@@ -55,6 +114,61 @@ export default function AutomationDetailPage({ automation: a, onBack, onEdit }) 
         {tab === "activity"    && <ActivityTab a={a} />}
         {tab === "errors"      && <ErrorsTab a={a} />}
         {tab === "settings"    && <SettingsTabBody a={a} />}
+      </div>
+
+      {errorLogOpen && <ErrorLogModal onClose={() => setErrorLogOpen(false)} />}
+    </div>
+  );
+}
+
+function ErrorLogModal({ onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-lg rounded-[14px] bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-[#E5E7EB] px-5 py-3.5">
+          <h2 className="text-[15px] font-semibold text-[#0F172A]">Error log</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded p-1.5 text-[#6A6A6A] hover:bg-[#F3F4F6]"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <div className="max-h-[420px] overflow-y-auto px-5 py-5">
+          <ul className="flex flex-col gap-2">
+            {MOCK_ERROR_LOG.map((row) => (
+              <li
+                key={row.id}
+                className="flex items-start justify-between gap-3 rounded-[8px] border border-[#E5E7EB] bg-white p-3"
+              >
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="flex items-center gap-1.5 text-[11px] font-medium text-[#6A7282]">
+                    <AlertTriangle size={11} className="text-red-500" />
+                    {row.timestamp}
+                  </span>
+                  <span className="text-[12px] font-semibold text-[#0F172A]">{row.reason}</span>
+                </div>
+                <button
+                  type="button"
+                  className="inline-flex h-7 shrink-0 items-center gap-1 rounded-[6px] border border-[#E5E7EB] bg-white px-2.5 text-[11px] font-medium text-[#374151] hover:bg-[#F3F4F6]"
+                >
+                  <RefreshCw size={11} /> Retry
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="flex items-center justify-end gap-2 border-t border-[#E5E7EB] px-5 py-3.5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-9 items-center rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -77,13 +191,13 @@ function Hero({ a }) {
   );
 }
 
-function StatRow({ a }) {
+function StatRow({ a, onViewErrorLog }) {
   return (
     <div className="grid grid-cols-4 gap-4">
       <Stat label="Runs (this month)"      value={a.runsThisMonth.toLocaleString()} sparkData={a.series} />
       <Stat label="Currently in flow"      value={a.inProgress.toLocaleString()} />
       <Stat label="Completed (this month)" value={a.completed.toLocaleString()} />
-      <Stat label="Errors"                 value={a.errors.toString()} sub={a.errors > 0 ? "View error log →" : "No errors"} subColor={a.errors > 0 ? "text-danger" : "text-ink-muted"} subOnClick={a.errors > 0 ? () => alert('Error log mock') : undefined} />
+      <Stat label="Errors"                 value={a.errors.toString()} sub={a.errors > 0 ? "View error log →" : "No errors"} subColor={a.errors > 0 ? "text-danger" : "text-ink-muted"} subOnClick={a.errors > 0 ? onViewErrorLog : undefined} />
     </div>
   );
 }

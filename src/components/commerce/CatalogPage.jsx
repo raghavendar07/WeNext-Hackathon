@@ -61,6 +61,12 @@ export default function CatalogPage() {
   const [showConnectionsModal, setShowConnectionsModal] = useState(false);
   const [showSyncPanel, setShowSyncPanel] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, tone = "success") => {
+    setToast({ message, tone });
+    setTimeout(() => setToast(null), 2400);
+  };
 
   const anyConnected = Object.values(PLATFORM_CONNECTIONS).some((c) => c.status === "connected" || c.status === "warning");
 
@@ -98,7 +104,7 @@ export default function CatalogPage() {
           {platform !== "all" && platform !== "wenext" && (
             <button
               type="button"
-              onClick={() => alert(`Sync now — ${PLATFORM_META[platform]?.label} (mock)`)}
+              onClick={() => setShowSyncPanel(true)}
               className="inline-flex h-10 items-center gap-2 rounded-button border border-line bg-white px-4 text-[13px] font-semibold text-ink-body hover:bg-surface-subtle"
             >
               <RefreshCw size={14} />
@@ -181,10 +187,14 @@ export default function CatalogPage() {
         <ProductDetailDrawer
           product={openProduct}
           onClose={() => setOpenProduct(null)}
+          showToast={showToast}
         />
       )}
       {showConnectionsModal && (
-        <ManageConnectionsModal onClose={() => setShowConnectionsModal(false)} />
+        <ManageConnectionsModal
+          onClose={() => setShowConnectionsModal(false)}
+          showToast={showToast}
+        />
       )}
       {showSyncPanel && (
         <SyncActivityPanel onClose={() => setShowSyncPanel(false)} />
@@ -192,6 +202,22 @@ export default function CatalogPage() {
       {showCreateModal && (
         <CreateProductModal onClose={() => setShowCreateModal(false)} />
       )}
+      {toast && <Toast message={toast.message} tone={toast.tone} />}
+    </div>
+  );
+}
+
+function Toast({ message, tone }) {
+  const toneClass = tone === "danger"
+    ? "border-red-200 bg-red-50 text-danger"
+    : "border-brand-emerald/30 bg-brand-50 text-brand-700";
+  const Icon = tone === "danger" ? AlertCircle : CheckCircle2;
+  return (
+    <div className="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
+      <div className={["pointer-events-auto flex items-center gap-2 rounded-md border px-4 py-2.5 shadow-modal", toneClass].join(" ")}>
+        <Icon size={14} />
+        <span className="text-[13px] font-semibold">{message}</span>
+      </div>
     </div>
   );
 }
@@ -484,19 +510,49 @@ function PlatformEmptyState({ platform, onManage }) {
 
 /* ───── Manage connections modal ───── */
 
-function ManageConnectionsModal({ onClose }) {
+function ManageConnectionsModal({ onClose, showToast }) {
+  const [activeSubmodal, setActiveSubmodal] = useState(null);
+  // activeSubmodal = { kind: "settings" | "disconnect" | "connect", connection }
+
   return (
-    <ModalShell onClose={onClose} title="Manage commerce integrations" subtitle="Sync products and orders with your e-commerce platforms" maxWidth="max-w-[640px]">
-      <div className="flex flex-col gap-3">
-        {Object.values(PLATFORM_CONNECTIONS).map((c) => (
-          <ConnectionCard key={c.id} connection={c} />
-        ))}
-      </div>
-    </ModalShell>
+    <>
+      <ModalShell onClose={onClose} title="Manage commerce integrations" subtitle="Sync products and orders with your e-commerce platforms" maxWidth="max-w-[640px]">
+        <div className="flex flex-col gap-3">
+          {Object.values(PLATFORM_CONNECTIONS).map((c) => (
+            <ConnectionCard
+              key={c.id}
+              connection={c}
+              showToast={showToast}
+              onOpenSubmodal={(kind) => setActiveSubmodal({ kind, connection: c })}
+            />
+          ))}
+        </div>
+      </ModalShell>
+      {activeSubmodal?.kind === "settings" && (
+        <ConnectionSettingsModal
+          connection={activeSubmodal.connection}
+          onClose={() => setActiveSubmodal(null)}
+          showToast={showToast}
+        />
+      )}
+      {activeSubmodal?.kind === "disconnect" && (
+        <ConfirmDisconnectModal
+          connection={activeSubmodal.connection}
+          onClose={() => setActiveSubmodal(null)}
+        />
+      )}
+      {activeSubmodal?.kind === "connect" && (
+        <ConnectPlatformModal
+          connection={activeSubmodal.connection}
+          onClose={() => setActiveSubmodal(null)}
+        />
+      )}
+    </>
   );
 }
 
-function ConnectionCard({ connection }) {
+function ConnectionCard({ connection, showToast, onOpenSubmodal }) {
+  const [primaryFlag, setPrimaryFlag] = useState(false);
   const isConnected = connection.status === "connected" || connection.status === "warning";
   const StatusIcon = connection.status === "connected" ? CheckCircle2 : connection.status === "warning" ? AlertCircle : XCircle;
   const statusColor = connection.status === "connected" ? "text-success" : connection.status === "warning" ? "text-warning" : "text-danger";
@@ -510,6 +566,12 @@ function ConnectionCard({ connection }) {
           <h3 className="text-[14px] font-semibold text-ink-heading">{connection.label}</h3>
           <p className="text-[12px] text-ink-muted">{connection.description}</p>
         </div>
+        {isConnected && primaryFlag && (
+          <span className="inline-flex h-5 items-center gap-1 rounded-pill bg-brand-50 px-2 text-[10px] font-semibold text-brand-700">
+            <Star size={10} fill="currentColor" strokeWidth={0} />
+            Primary
+          </span>
+        )}
       </div>
 
       {isConnected ? (
@@ -527,15 +589,27 @@ function ConnectionCard({ connection }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={() => alert(`Sync Now — ${connection.label} (mock)`)} className="inline-flex h-9 items-center gap-1.5 rounded-button bg-cta-gradient px-4 text-[12px] font-semibold text-white hover:opacity-90">
+            <button
+              type="button"
+              onClick={() => showToast(`Sync started — ${connection.label}`)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-button bg-cta-gradient px-4 text-[12px] font-semibold text-white hover:opacity-90"
+            >
               <RefreshCw size={12} />
               Sync Now
             </button>
-            <button type="button" onClick={() => alert(`Settings — ${connection.label} (mock)`)} className="inline-flex h-9 items-center gap-1.5 rounded-button border border-line bg-white px-4 text-[12px] font-semibold text-ink-body hover:bg-surface-subtle">
+            <button
+              type="button"
+              onClick={() => onOpenSubmodal("settings")}
+              className="inline-flex h-9 items-center gap-1.5 rounded-button border border-line bg-white px-4 text-[12px] font-semibold text-ink-body hover:bg-surface-subtle"
+            >
               <SettingsIcon size={12} />
               Settings
             </button>
-            <button type="button" onClick={() => alert(`Disconnect — ${connection.label} (mock)`)} className="inline-flex h-9 items-center rounded-button px-3 text-[12px] font-semibold text-danger hover:bg-red-50">
+            <button
+              type="button"
+              onClick={() => onOpenSubmodal("disconnect")}
+              className="inline-flex h-9 items-center rounded-button px-3 text-[12px] font-semibold text-danger hover:bg-red-50"
+            >
               Disconnect
             </button>
           </div>
@@ -546,13 +620,179 @@ function ConnectionCard({ connection }) {
             <XCircle size={12} />
             Not connected
           </span>
-          <button type="button" onClick={() => alert(`Connect ${connection.label} (mock)`)} className="inline-flex h-9 items-center gap-1.5 rounded-button bg-cta-gradient px-4 text-[12px] font-semibold text-white hover:opacity-90">
+          <button
+            type="button"
+            onClick={() => onOpenSubmodal("connect")}
+            className="inline-flex h-9 items-center gap-1.5 rounded-button bg-cta-gradient px-4 text-[12px] font-semibold text-white hover:opacity-90"
+          >
             <Plug size={12} />
             Connect →
           </button>
         </div>
       )}
     </div>
+  );
+}
+
+/* ───── Connection sub-modals ───── */
+
+function ConnectionSettingsModal({ connection, onClose, showToast }) {
+  const [frequency, setFrequency] = useState("realtime");
+  const [direction, setDirection] = useState("two-way");
+
+  const freqOptions = [
+    { id: "realtime", label: "Real-time" },
+    { id: "hourly",   label: "Hourly" },
+    { id: "daily",    label: "Daily" },
+  ];
+  const dirOptions = [
+    { id: "two-way",  label: "Two-way" },
+    { id: "inbound",  label: "Inbound only" },
+    { id: "outbound", label: "Outbound only" },
+  ];
+
+  return (
+    <ModalShell onClose={onClose} title={`${connection.label} settings`} subtitle="Configure sync behavior" maxWidth="max-w-[480px]">
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2">
+          <label className="text-[12px] font-semibold text-ink-heading">Sync frequency</label>
+          <div className="grid grid-cols-3 gap-2">
+            {freqOptions.map((o) => {
+              const active = frequency === o.id;
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => setFrequency(o.id)}
+                  className={[
+                    "inline-flex h-10 items-center justify-center rounded-button border text-[12px] font-medium transition-colors",
+                    active
+                      ? "border-brand-emerald bg-brand-50 text-brand-emerald"
+                      : "border-line bg-white text-ink-body hover:bg-surface-subtle",
+                  ].join(" ")}
+                >
+                  {o.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label className="text-[12px] font-semibold text-ink-heading">Sync direction</label>
+          <div className="grid grid-cols-3 gap-2">
+            {dirOptions.map((o) => {
+              const active = direction === o.id;
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => setDirection(o.id)}
+                  className={[
+                    "inline-flex h-10 items-center justify-center rounded-button border text-[12px] font-medium transition-colors",
+                    active
+                      ? "border-brand-emerald bg-brand-50 text-brand-emerald"
+                      : "border-line bg-white text-ink-body hover:bg-surface-subtle",
+                  ].join(" ")}
+                >
+                  {o.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onClick={onClose} className="inline-flex h-10 items-center rounded-button border border-line bg-white px-4 text-[13px] font-semibold text-ink-body hover:bg-surface-subtle">
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => { showToast?.(`Settings saved — ${connection.label}`); onClose(); }}
+            className="inline-flex h-10 items-center gap-2 rounded-button bg-cta-gradient px-5 text-[13px] font-semibold text-white hover:opacity-90"
+          >
+            Save settings
+          </button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+function ConfirmDisconnectModal({ connection, onClose }) {
+  return (
+    <ModalShell onClose={onClose} title={`Disconnect ${connection.label}?`} maxWidth="max-w-[440px]">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start gap-3 rounded-md border border-red-200 bg-red-50/40 p-3">
+          <AlertTriangle size={18} className="mt-0.5 text-danger" />
+          <div className="flex flex-col gap-1 text-[13px] text-ink-body">
+            <p>
+              Disconnecting will stop syncing products and orders between WeNext and {connection.label}.
+            </p>
+            <p className="text-ink-muted">
+              Existing data stays in WeNext but will no longer update automatically. You can reconnect at any time.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onClick={onClose} className="inline-flex h-10 items-center rounded-button border border-line bg-white px-4 text-[13px] font-semibold text-ink-body hover:bg-surface-subtle">
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => { alert(`${connection.label} disconnected (mock)`); onClose(); }}
+            className="inline-flex h-10 items-center rounded-button bg-danger px-5 text-[13px] font-semibold text-white hover:opacity-90"
+          >
+            Disconnect
+          </button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+function ConnectPlatformModal({ connection, onClose }) {
+  const [apiKey, setApiKey] = useState("");
+  const [storeUrl, setStoreUrl] = useState("");
+
+  return (
+    <ModalShell onClose={onClose} title={`Connect ${connection.label}`} subtitle="Enter your API credentials" maxWidth="max-w-[480px]">
+      <div className="flex flex-col gap-4">
+        <Field label="API Key">
+          <input
+            type="text"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="sk_live_..."
+            className="h-10 w-full rounded-md border border-line bg-white px-3 font-mono text-[12px] focus:outline-none focus-visible:shadow-focus"
+          />
+        </Field>
+        <Field label="Store URL">
+          <input
+            type="text"
+            value={storeUrl}
+            onChange={(e) => setStoreUrl(e.target.value)}
+            placeholder="your-store.myshopify.com"
+            className="h-10 w-full rounded-md border border-line bg-white px-3 text-[13px] focus:outline-none focus-visible:shadow-focus"
+          />
+        </Field>
+
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onClick={onClose} className="inline-flex h-10 items-center rounded-button border border-line bg-white px-4 text-[13px] font-semibold text-ink-body hover:bg-surface-subtle">
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => { alert(`${connection.label} connected (mock)`); onClose(); }}
+            className="inline-flex h-10 items-center gap-2 rounded-button bg-cta-gradient px-5 text-[13px] font-semibold text-white hover:opacity-90"
+          >
+            <Plug size={12} />
+            Connect
+          </button>
+        </div>
+      </div>
+    </ModalShell>
   );
 }
 
@@ -606,8 +846,16 @@ function SyncEventRow({ event }) {
 
 /* ───── Product detail drawer ───── */
 
-function ProductDetailDrawer({ product, onClose }) {
+function ProductDetailDrawer({ product, onClose, showToast }) {
   const conflict = product.conflict;
+  const [conflictResolved, setConflictResolved] = useState(false);
+  const [primaryOverride, setPrimaryOverride] = useState(null);
+  const [enabledOverrides, setEnabledOverrides] = useState({});
+  const [errorFixed, setErrorFixed] = useState({});
+
+  const currentPrimary = primaryOverride ?? product.sourceOfTruth;
+  const isEnabled = (id, fallback) => enabledOverrides[id] ?? fallback;
+
   return (
     <SlideOverShell
       onClose={onClose}
@@ -616,7 +864,13 @@ function ProductDetailDrawer({ product, onClose }) {
       width="max-w-[560px]"
       back
     >
-      {conflict && <ConflictBanner product={product} conflict={conflict} />}
+      {conflict && !conflictResolved && (
+        <ConflictBanner
+          product={product}
+          conflict={conflict}
+          onResolve={(msg) => { setConflictResolved(true); showToast?.(msg); }}
+        />
+      )}
 
       <div className="flex flex-col gap-2 px-5 pb-3 pt-5">
         <div className="grid grid-cols-3 gap-3">
@@ -637,13 +891,27 @@ function ProductDetailDrawer({ product, onClose }) {
             key={id}
             id={id}
             platform={product.platforms?.[id]}
-            isPrimary={product.sourceOfTruth === id}
+            isPrimary={currentPrimary === id}
+            enabledOverride={enabledOverrides[id]}
+            errorFixed={errorFixed[id]}
+            onSetPrimary={() => {
+              setPrimaryOverride(id);
+              showToast?.(`${PLATFORM_META[id]?.label} set as primary`);
+            }}
+            onFix={() => {
+              setErrorFixed((m) => ({ ...m, [id]: true }));
+              showToast?.(`Sync issue resolved — ${PLATFORM_META[id]?.label}`);
+            }}
+            onToggle={(next) => {
+              setEnabledOverrides((m) => ({ ...m, [id]: next }));
+              showToast?.(`${next ? "Enabled" : "Disabled"} sync — ${PLATFORM_META[id]?.label}`);
+            }}
           />
         ))}
         <PlatformRow
           id="wenext"
           platform={product.platforms?.wenext ?? { enabled: true, lastSync: "—", syncStatus: "in_sync" }}
-          isPrimary={product.sourceOfTruth === "wenext"}
+          isPrimary={currentPrimary === "wenext"}
           nativeOnly
         />
       </div>
@@ -651,7 +919,7 @@ function ProductDetailDrawer({ product, onClose }) {
   );
 }
 
-function ConflictBanner({ product, conflict }) {
+function ConflictBanner({ product, conflict, onResolve }) {
   return (
     <aside className="m-5 flex items-start gap-3 rounded-md border border-warning/40 bg-amber-50/60 p-4">
       <AlertTriangle size={18} className="mt-0.5 text-warning" />
@@ -673,13 +941,17 @@ function ConflictBanner({ product, conflict }) {
             <button
               key={platformId}
               type="button"
-              onClick={() => alert(`Use ${PLATFORM_META[platformId]?.label} version everywhere (mock)`)}
+              onClick={() => onResolve?.(`Using ${PLATFORM_META[platformId]?.label} version`)}
               className="inline-flex h-8 items-center rounded-button border border-line bg-white px-3 text-[11px] font-semibold text-ink-body hover:bg-surface-subtle"
             >
               Use {PLATFORM_META[platformId]?.label} version everywhere
             </button>
           ))}
-          <button type="button" onClick={() => alert('Resolve manually (mock)')} className="inline-flex h-8 items-center rounded-button border border-line bg-white px-3 text-[11px] font-semibold text-ink-body hover:bg-surface-subtle">
+          <button
+            type="button"
+            onClick={() => onResolve?.("Conflict marked as resolved")}
+            className="inline-flex h-8 items-center rounded-button border border-line bg-white px-3 text-[11px] font-semibold text-ink-body hover:bg-surface-subtle"
+          >
             Resolve manually
           </button>
         </div>
@@ -688,10 +960,11 @@ function ConflictBanner({ product, conflict }) {
   );
 }
 
-function PlatformRow({ id, platform, isPrimary, nativeOnly }) {
+function PlatformRow({ id, platform, isPrimary, nativeOnly, enabledOverride, errorFixed, onSetPrimary, onFix, onToggle }) {
   const meta = PLATFORM_META[id];
-  const enabled = platform?.enabled ?? false;
-  const hasError = platform?.syncStatus === "error";
+  const baseEnabled = platform?.enabled ?? false;
+  const enabled = enabledOverride ?? baseEnabled;
+  const hasError = platform?.syncStatus === "error" && !errorFixed;
   return (
     <div className="flex items-center gap-3 border-t border-line px-5 py-4">
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-line bg-surface-subtle">
@@ -707,28 +980,36 @@ function PlatformRow({ id, platform, isPrimary, nativeOnly }) {
             </span>
           )}
           {!isPrimary && enabled && !nativeOnly && (
-            <button type="button" onClick={() => alert(`Set ${meta?.label} as primary (mock)`)} className="text-[11px] font-semibold text-brand-emerald hover:underline">
+            <button
+              type="button"
+              onClick={onSetPrimary}
+              className="text-[11px] font-semibold text-brand-emerald hover:underline"
+            >
               Set as primary
             </button>
           )}
         </div>
-        <PlatformRowStatus platform={platform} enabled={enabled} nativeOnly={nativeOnly} />
+        <PlatformRowStatus platform={platform} enabled={enabled} nativeOnly={nativeOnly} errorFixed={errorFixed} />
       </div>
       {hasError && (
-        <button type="button" onClick={() => alert(`Fix sync error — ${meta?.label} (mock)`)} className="inline-flex h-8 items-center gap-1 rounded-button border border-warning/50 bg-amber-50 px-3 text-[11px] font-semibold text-warning hover:bg-amber-100">
+        <button
+          type="button"
+          onClick={onFix}
+          className="inline-flex h-8 items-center gap-1 rounded-button border border-warning/50 bg-amber-50 px-3 text-[11px] font-semibold text-warning hover:bg-amber-100"
+        >
           <Wrench size={12} />
           Fix
         </button>
       )}
-      <Toggle on={enabled} disabled={nativeOnly} platformLabel={meta?.label} />
+      <Toggle on={enabled} disabled={nativeOnly} onChange={(next) => onToggle?.(next)} />
     </div>
   );
 }
 
-function PlatformRowStatus({ platform, enabled, nativeOnly }) {
+function PlatformRowStatus({ platform, enabled, nativeOnly, errorFixed }) {
   if (nativeOnly) return <span className="text-[11px] text-ink-muted">Always — internal catalog</span>;
   if (!enabled) return <span className="text-[11px] text-ink-muted">Not published</span>;
-  if (platform.syncStatus === "error") {
+  if (platform.syncStatus === "error" && !errorFixed) {
     return (
       <span className="inline-flex items-center gap-1 text-[11px] text-danger">
         <AlertCircle size={11} />
@@ -750,14 +1031,14 @@ function PlatformRowStatus({ platform, enabled, nativeOnly }) {
   );
 }
 
-function Toggle({ on, disabled, platformLabel }) {
+function Toggle({ on, disabled, onChange }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={on}
       disabled={disabled}
-      onClick={() => alert(`${on ? "Disable" : "Enable"} sync${platformLabel ? ` — ${platformLabel}` : ""} (mock)`)}
+      onClick={() => !disabled && onChange?.(!on)}
       className={[
         "relative inline-flex h-6 w-10 shrink-0 items-center rounded-full transition-colors",
         on ? "bg-brand-emerald" : "bg-gray-200",
@@ -868,7 +1149,15 @@ function CreateProductModal({ onClose }) {
           <button type="button" onClick={onClose} className="inline-flex h-10 items-center rounded-button border border-line bg-white px-4 text-[13px] font-semibold text-ink-body hover:bg-surface-subtle">
             Cancel
           </button>
-          <button type="button" onClick={(e) => { e.preventDefault(); alert('Product created (mock)'); onClose(); }} className="inline-flex h-10 items-center gap-2 rounded-button bg-cta-gradient px-5 text-[13px] font-semibold text-white hover:opacity-90">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              if (!name.trim()) { alert('Name required'); return; }
+              onClose();
+            }}
+            className="inline-flex h-10 items-center gap-2 rounded-button bg-cta-gradient px-5 text-[13px] font-semibold text-white hover:opacity-90"
+          >
             Create product
           </button>
         </div>

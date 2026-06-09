@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AtSign,
   Bold,
@@ -34,6 +34,8 @@ export default function CreatePostFlow({ accounts, onCancel, onPublish }) {
     advancedOpen: false,
   });
   const [confirm, setConfirm] = useState(null);
+  const [toast, setToast] = useState(null);
+  useEffect(() => { if (toast) { const t = setTimeout(() => setToast(null), 2000); return () => clearTimeout(t); } }, [toast]);
 
   const update = (patch) => setForm((f) => ({ ...f, ...patch }));
 
@@ -71,7 +73,7 @@ export default function CreatePostFlow({ accounts, onCancel, onPublish }) {
         <div className="min-w-0 flex-1 overflow-y-auto px-8 py-6">
           <div className="mx-auto flex max-w-[640px] flex-col gap-6">
             <ChannelPicker form={form} update={update} accounts={accounts} />
-            <CaptionField form={form} update={update} limit={captionLimit} length={captionLength} />
+            <CaptionField form={form} update={update} limit={captionLimit} length={captionLength} onToast={setToast} />
             <MediaField form={form} update={update} />
             <HashtagsField form={form} update={update} />
             {form.channels.includes("instagram") && <FirstCommentField form={form} update={update} />}
@@ -104,6 +106,9 @@ export default function CreatePostFlow({ accounts, onCancel, onPublish }) {
             onPublish({ kind: "scheduled", at: c.at, channels: c.channels });
           }}
         />
+      )}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 rounded-[8px] bg-[#111827] px-3 py-2 text-[12px] font-semibold text-white shadow-lg">{toast}</div>
       )}
     </div>
   );
@@ -205,28 +210,100 @@ function GlobalCard({ selected, connectedCount, onClick }) {
 
 /* ──────────── Caption ──────────── */
 
-function CaptionField({ form, update, limit, length }) {
+const EMOJIS = ["😀", "🎉", "🔥", "✨", "💡", "🚀", "❤️", "👍"];
+const MENTIONS = ["@wenext", "@retail_india", "@diwali_sale", "@brand_studio", "@social_team"];
+
+function CaptionField({ form, update, limit, length, onToast }) {
+  const sharedRef = useRef(null);
+  const perRef = useRef(null);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [mentionOpen, setMentionOpen] = useState(false);
+
+  const isShared = form.captionMode === "shared";
+  const getActive = () => {
+    if (isShared) return { value: form.sharedCaption, set: (v) => update({ sharedCaption: v }), ref: sharedRef };
+    const id = form._activePerCaptionTab || form.channels[0];
+    return { value: form.perCaption[id] ?? "", set: (v) => update({ perCaption: { ...form.perCaption, [id]: v } }), ref: perRef };
+  };
+
+  const wrapOrInsert = (wrap) => {
+    const { value, set, ref } = getActive();
+    const el = ref.current;
+    if (el && typeof el.selectionStart === "number" && el.selectionStart !== el.selectionEnd) {
+      const start = el.selectionStart;
+      const end = el.selectionEnd;
+      const next = value.slice(0, start) + wrap + value.slice(start, end) + wrap + value.slice(end);
+      set(next);
+      requestAnimationFrame(() => { el.focus(); el.setSelectionRange(start + wrap.length, end + wrap.length); });
+    } else {
+      set(value + wrap + wrap);
+    }
+  };
+
+  const insertAtCursor = (text) => {
+    const { value, set, ref } = getActive();
+    const el = ref.current;
+    if (el && typeof el.selectionStart === "number") {
+      const start = el.selectionStart;
+      const end = el.selectionEnd;
+      const next = value.slice(0, start) + text + value.slice(end);
+      set(next);
+      requestAnimationFrame(() => { el.focus(); el.setSelectionRange(start + text.length, start + text.length); });
+    } else {
+      set(value + text);
+    }
+  };
+
   return (
     <Block heading="Caption" subtitle={`${limit.toLocaleString()} character limit (smallest selected platform)`}>
-      <div className="flex items-center gap-1 rounded-sm border border-line bg-surface-subtle px-2 py-1">
-        <ToolbarBtn icon={<Bold size={14} />} label="Bold" onClick={() => alert('Format mock')} />
-        <ToolbarBtn icon={<Italic size={14} />} label="Italic" onClick={() => alert('Format mock')} />
-        <ToolbarBtn icon={<Hash size={14} />} label="Hashtag" onClick={() => alert('Format mock')} />
-        <ToolbarBtn icon={<Smile size={14} />} label="Emoji" onClick={() => alert('Format mock')} />
-        <ToolbarBtn icon={<AtSign size={14} />} label="Mention" onClick={() => alert('Format mock')} />
+      <div className="relative flex items-center gap-1 rounded-sm border border-line bg-surface-subtle px-2 py-1">
+        <ToolbarBtn icon={<Bold size={14} />}   label="Bold"    onClick={() => wrapOrInsert("**")} />
+        <ToolbarBtn icon={<Italic size={14} />} label="Italic"  onClick={() => wrapOrInsert("_")} />
+        <ToolbarBtn icon={<Hash size={14} />}   label="Hashtag" onClick={() => insertAtCursor("#")} />
+        <div className="relative">
+          <ToolbarBtn icon={<Smile size={14} />} label="Emoji"  onClick={() => { setEmojiOpen((o) => !o); setMentionOpen(false); }} />
+          {emojiOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setEmojiOpen(false)} />
+              <div className="absolute left-0 top-full z-20 mt-1 grid grid-cols-4 gap-1 rounded-[8px] border border-[#E5E7EB] bg-white p-2 shadow-lg">
+                {EMOJIS.map((e) => (
+                  <button key={e} type="button" onClick={() => { insertAtCursor(e); setEmojiOpen(false); }} className="flex h-7 w-7 items-center justify-center rounded-[6px] text-[16px] hover:bg-[#F3F4F6]">
+                    {e}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        <div className="relative">
+          <ToolbarBtn icon={<AtSign size={14} />} label="Mention" onClick={() => { setMentionOpen((o) => !o); setEmojiOpen(false); }} />
+          {mentionOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setMentionOpen(false)} />
+              <div className="absolute left-0 top-full z-20 mt-1 w-44 rounded-[8px] border border-[#E5E7EB] bg-white p-1 shadow-lg">
+                {MENTIONS.map((m) => (
+                  <button key={m} type="button" onClick={() => { insertAtCursor(m + " "); setMentionOpen(false); }} className="flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[12px] font-medium text-[#374151] hover:bg-[#F3F4F6]">
+                    {m}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
         <span aria-hidden className="mx-1 h-4 w-px bg-line" />
         <button
           type="button"
-          onClick={() => update({ sharedCaption: 'AI: Try our new collection!' })}
+          onClick={() => { update({ sharedCaption: 'AI: Try our new collection!' }); onToast?.("AI caption generated"); }}
           className="inline-flex h-7 items-center gap-1 rounded-xs px-2 text-[11px] font-semibold text-brand-emerald hover:bg-brand-50"
         >
           <Sparkles size={12} /> Generate with AI
         </button>
       </div>
 
-      {form.captionMode === "shared" ? (
+      {isShared ? (
         <div className="relative">
           <textarea
+            ref={sharedRef}
             value={form.sharedCaption}
             maxLength={limit}
             onChange={(e) => update({ sharedCaption: e.target.value })}
@@ -236,7 +313,7 @@ function CaptionField({ form, update, limit, length }) {
           <span className="pointer-events-none absolute bottom-2 right-3 text-[10px] font-medium text-ink-subtle">{length}/{limit}</span>
         </div>
       ) : (
-        <PerPlatformCaptions form={form} update={update} />
+        <PerPlatformCaptions form={form} update={update} textareaRef={perRef} />
       )}
 
       <button
@@ -250,10 +327,11 @@ function CaptionField({ form, update, limit, length }) {
   );
 }
 
-function PerPlatformCaptions({ form, update }) {
+function PerPlatformCaptions({ form, update, textareaRef }) {
   const channels = form.channels;
   const [tab, setTab] = useState(channels[0]);
   useEffect(() => { if (!channels.includes(tab)) setTab(channels[0]); }, [channels, tab]);
+  useEffect(() => { update({ _activePerCaptionTab: tab }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tab]);
   const platform = findPlatform(tab);
   if (!platform) return null;
   const value = form.perCaption[tab] ?? "";
@@ -272,6 +350,7 @@ function PerPlatformCaptions({ form, update }) {
       </div>
       <div className="relative">
         <textarea
+          ref={textareaRef}
           value={value}
           maxLength={platform.captionLimit}
           onChange={(e) => update({ perCaption: { ...form.perCaption, [tab]: e.target.value } })}

@@ -62,6 +62,7 @@ export default function AutomationsPage() {
           }
         }}
         onOpen={(id) => setRoute({ name: "detail", id })}
+        onEdit={(a) => setRoute({ name: "builder", presetAutomation: a, presetChannel: a.channel ?? "whatsapp" })}
       />
       {pickerOpen && (
         <ChannelPickerModal

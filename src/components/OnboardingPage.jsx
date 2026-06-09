@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { X, UserPlus, ShieldCheck, LifeBuoy } from "lucide-react";
 import AutomationFlow from "./AutomationFlow.jsx";
 import CardStack from "./CardStack.jsx";
 import Logo from "./Logo.jsx";
@@ -32,6 +33,7 @@ export default function OnboardingPage({ onComplete }) {
   const [fullName, setFullName] = useState("");
   const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
+  const [helpOpen, setHelpOpen] = useState(false);
   const total = STEPS.length;
   const current = STEPS[Math.min(step, total - 1)];
   const isLastStep = step >= total - 1;
@@ -67,12 +69,14 @@ export default function OnboardingPage({ onComplete }) {
         <Logo className="h-[26px] w-auto" />
         <button
           type="button"
-          onClick={() => alert("Help — coming soon")}
+          onClick={() => setHelpOpen(true)}
           className="rounded-[46px] border border-[#1EB677] px-[15px] py-[12px] text-[14px] font-medium text-[#1EB677] transition-colors hover:bg-[#ECFDF5]"
         >
           Help
         </button>
       </div>
+
+      {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
 
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[670px_1fr]">
         {/* Left brand panel hosting the card stack */}
@@ -175,6 +179,66 @@ function BrandCard({ title, subtitle }) {
       </div>
       <div className="flex justify-center">
         <AutomationFlow />
+      </div>
+    </div>
+  );
+}
+
+function HelpModal({ onClose }) {
+  const tips = [
+    {
+      icon: <UserPlus size={16} className="text-[#1EB677]" />,
+      title: "Need an account?",
+      subtitle: "Sign up in under a minute",
+      onClick: () => alert("Sign up flow — coming soon"),
+    },
+    {
+      icon: <ShieldCheck size={16} className="text-[#1EB677]" />,
+      title: "Privacy policy",
+      subtitle: "Read how we handle your data",
+      onClick: () => alert("Privacy policy — coming soon"),
+    },
+    {
+      icon: <LifeBuoy size={16} className="text-[#1EB677]" />,
+      title: "Contact support",
+      subtitle: "We usually reply within an hour",
+      onClick: () => alert("Support — coming soon"),
+    },
+  ];
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-md rounded-[14px] bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-[#E5E7EB] px-5 py-3.5">
+          <h2 className="text-[15px] font-semibold text-[#0F172A]">Need a hand?</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded p-1.5 text-[#6A6A6A] hover:bg-[#F3F4F6]"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <div className="flex flex-col gap-2 px-5 py-5">
+          {tips.map((t, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => {
+                t.onClick();
+              }}
+              className="flex items-center gap-3 rounded-[10px] border border-[#E5E7EB] bg-white p-3 text-left transition-colors hover:border-[#1EB677] hover:bg-[#ECFDF5]"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#ECFDF5]">
+                {t.icon}
+              </span>
+              <span className="flex flex-col">
+                <span className="text-[13px] font-semibold text-[#0F172A]">{t.title}</span>
+                <span className="text-[12px] font-medium text-[#6A7282]">{t.subtitle}</span>
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

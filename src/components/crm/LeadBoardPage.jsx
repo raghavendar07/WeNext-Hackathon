@@ -1,11 +1,13 @@
 import { useState } from "react";
 import KanbanColumn from "./KanbanColumn.jsx";
+import LeadDetailDrawer from "./LeadDetailDrawer.jsx";
 import { LEADS, STAGES } from "./data.js";
 
 export default function LeadBoardPage() {
   const [leads, setLeads] = useState(LEADS);
   const [draggingId, setDraggingId] = useState(null);
   const [dropTarget, setDropTarget] = useState(null);
+  const [openLead, setOpenLead] = useState(null);
 
   const handleDragStart = (id) => setDraggingId(id);
   const handleDragEnd = () => {
@@ -35,8 +37,11 @@ export default function LeadBoardPage() {
           onDragOverColumn={() => setDropTarget(stage.id)}
           onDragLeaveColumn={() => setDropTarget((c) => (c === stage.id ? null : c))}
           onDropOnColumn={() => handleDropOn(stage.id)}
+          onOpenLead={(lead) => setOpenLead(lead)}
         />
       ))}
+
+      {openLead && <LeadDetailDrawer lead={openLead} onClose={() => setOpenLead(null)} />}
     </div>
   );
 }

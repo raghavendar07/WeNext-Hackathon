@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import CalendarEventBlock from "./CalendarEventBlock.jsx";
+import { NewAppointmentModal } from "./CalendarPageHeader.jsx";
 import {
   EVENTS,
   ROW_HEIGHT,
@@ -30,6 +31,7 @@ export default function CalendarWeekView({ activeCategory = "all" }) {
   const showNow = nowDecimal >= TIME_RANGE.start && nowDecimal <= TIME_RANGE.end;
   const nowTop = (nowDecimal - TIME_RANGE.start) * ROW_HEIGHT;
   const scrollRef = useRef(null);
+  const [slotPrefill, setSlotPrefill] = useState(null);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -53,6 +55,7 @@ export default function CalendarWeekView({ activeCategory = "all" }) {
   };
 
   return (
+    <>
     <div
       ref={scrollRef}
       className="overflow-auto rounded-md border border-line bg-canvas"
@@ -120,7 +123,7 @@ export default function CalendarWeekView({ activeCategory = "all" }) {
               >
                 {clean12h(h)}
               </div>
-              {dates.map((_, colIdx) => {
+              {dates.map((dateObj, colIdx) => {
                 const isWeekend = colIdx >= 5;
                 const isToday = colIdx === todayIdx;
                 const isPast = todayIdx >= 0 && colIdx < todayIdx;
@@ -132,10 +135,12 @@ export default function CalendarWeekView({ activeCategory = "all" }) {
                 const dividerClass = isStrong
                   ? "border-b border-dashed border-line-default"
                   : "border-b border-dashed border-line";
+                const isoDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(dateObj.getDate()).padStart(2, "0")}`;
+                const isoTime = `${String(h).padStart(2, "0")}:00`;
                 return (
                   <div
                     key={`cell-${rowIdx}-${colIdx}`}
-                    onClick={() => alert('Create event mock')}
+                    onClick={() => setSlotPrefill({ date: isoDate, time: isoTime })}
                     className={[
                       "relative cursor-pointer transition-colors",
                       colIdx < 6 ? "border-r border-line" : "",
@@ -170,6 +175,13 @@ export default function CalendarWeekView({ activeCategory = "all" }) {
         )}
       </div>
     </div>
+    {slotPrefill && (
+      <NewAppointmentModal
+        prefill={slotPrefill}
+        onClose={() => setSlotPrefill(null)}
+      />
+    )}
+    </>
   );
 }
 

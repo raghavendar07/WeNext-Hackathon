@@ -1,10 +1,15 @@
 import { useMemo, useState } from "react";
 import {
   ChevronDown,
+  Copy,
+  Eye,
   LayoutGrid,
   MoreHorizontal,
+  Pause,
+  Pencil,
   Search,
   Table as TableIcon,
+  Trash2,
 } from "lucide-react";
 import {
   AUTOMATIONS,
@@ -16,6 +21,38 @@ import {
   totalMessagesThisMonth,
   totalRunsThisMonth,
 } from "./data.js";
+
+const TRIGGER_FILTERS = [
+  { id: "all",            label: "All triggers" },
+  { id: "form_submitted", label: "Form submitted" },
+  { id: "cart_abandoned", label: "Cart abandoned" },
+  { id: "order_placed",   label: "Order placed" },
+  { id: "webhook",        label: "Webhook" },
+  { id: "manual",         label: "Manual" },
+];
+
+function DropdownMenu({ open, onClose, anchor = "right", items }) {
+  if (!open) return null;
+  return (
+    <>
+      <div className="fixed inset-0 z-10" onClick={onClose} />
+      <div className={`absolute ${anchor === "right" ? "right-0" : "left-0"} top-full mt-1 z-20 w-44 rounded-[8px] border border-[#E5E7EB] bg-white p-1 shadow-lg`}>
+        {items.map((it, i) => it === "divider" ? (
+          <div key={i} className="my-1 h-px bg-[#F3F4F6]" />
+        ) : (
+          <button
+            key={i}
+            type="button"
+            onClick={(e) => { e.stopPropagation(); it.onClick?.(); onClose(); }}
+            className={`flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[12px] font-medium ${it.danger ? "text-red-600 hover:bg-red-50" : "text-[#374151] hover:bg-[#F3F4F6]"}`}
+          >
+            {it.icon}{it.label}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
 
 const STATUS_FILTERS = [
   { id: "all",     label: "All" },
@@ -31,9 +68,19 @@ const CHANNEL_FILTERS = [
   { id: "instagram", label: "Instagram",    icon: "📸" },
 ];
 
-export default function AutomationsListPage({ automations = AUTOMATIONS, onCreate, onUseExample, onOpen }) {
+/**
+ * AutomationsListPage
+ * Props:
+ *   automations   – list of automations to render (defaults to AUTOMATIONS seed)
+ *   onCreate      – called when the user clicks "Create Automation"
+ *   onUseExample  – called from the empty-state example tiles
+ *   onOpen        – called with an automation id when the user opens one
+ *   onEdit        – called with the automation object when the user clicks Edit on a card
+ */
+export default function AutomationsListPage({ automations = AUTOMATIONS, onCreate, onUseExample, onOpen, onEdit }) {
   const [status, setStatus] = useState("all");
   const [channel, setChannel] = useState("all");
+  const [trigger, setTrigger] = useState("all");
   const [query, setQuery] = useState("");
   const [view, setView] = useState("card");
 
@@ -45,10 +92,11 @@ export default function AutomationsListPage({ automations = AUTOMATIONS, onCreat
     return automations.filter((a) => {
       if (status !== "all" && a.status !== status) return false;
       if (channel !== "all" && (a.channel ?? "whatsapp") !== channel) return false;
+      if (trigger !== "all" && a.triggerType !== trigger) return false;
       if (query && !a.name.toLowerCase().includes(query.toLowerCase())) return false;
       return true;
     });
-  }, [automations, status, channel, query]);
+  }, [automations, status, channel, trigger, query]);
 
   const metrics = useMemo(() => buildMetrics(automations), [automations]);
 
@@ -59,15 +107,16 @@ export default function AutomationsListPage({ automations = AUTOMATIONS, onCreat
       <Toolbar
         status={status} onStatusChange={setStatus}
         channel={channel} onChannelChange={setChannel}
+        trigger={trigger} onTriggerChange={setTrigger}
         query={query} onQueryChange={setQuery}
         view={view} onViewChange={setView}
       />
       {filtered.length === 0 ? (
-        <NoMatch onReset={() => { setStatus("all"); setChannel("all"); setQuery(""); }} />
+        <NoMatch onReset={() => { setStatus("all"); setChannel("all"); setTrigger("all"); setQuery(""); }} />
       ) : view === "card" ? (
-        <CardGrid items={filtered} onOpen={onOpen} />
+        <CardGrid items={filtered} onOpen={onOpen} onEdit={onEdit} />
       ) : (
-        <TableView items={filtered} onOpen={onOpen} />
+        <TableView items={filtered} onOpen={onOpen} onEdit={onEdit} />
       )}
     </div>
   );
@@ -108,7 +157,9 @@ function Tile({ label, value, sub }) {
   );
 }
 
-function Toolbar({ status, onStatusChange, channel, onChannelChange, query, onQueryChange, view, onViewChange }) {
+function Toolbar({ status, onStatusChange, channel, onChannelChange, trigger, onTriggerChange, query, onQueryChange, view, onViewChange }) {
+  const [triggerOpen, setTriggerOpen] = useState(false);
+  const currentTrigger = TRIGGER_FILTERS.find((t) => t.id === trigger) ?? TRIGGER_FILTERS[0];
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -145,9 +196,24 @@ function Toolbar({ status, onStatusChange, channel, onChannelChange, query, onQu
             );
           })}
         </div>
-        <button type="button" onClick={() => alert('Trigger filter mock')} className="inline-flex h-9 items-center gap-2 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
-          All triggers <ChevronDown size={12} className="text-ink-muted" />
-        </button>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setTriggerOpen((v) => !v)}
+            className={["inline-flex h-9 items-center gap-2 rounded-button border bg-white px-3 text-[12px] font-medium hover:bg-surface-subtle", trigger === "all" ? "border-line text-ink-body" : "border-brand-emerald text-brand-emerald"].join(" ")}
+          >
+            {currentTrigger.label} <ChevronDown size={12} className="text-ink-muted" />
+          </button>
+          <DropdownMenu
+            open={triggerOpen}
+            onClose={() => setTriggerOpen(false)}
+            anchor="left"
+            items={TRIGGER_FILTERS.map((t) => ({
+              label: t.label,
+              onClick: () => onTriggerChange(t.id),
+            }))}
+          />
+        </div>
       </div>
       <div className="inline-flex h-9 rounded-md border border-line bg-white p-0.5">
         <ToggleBtn active={view === "card"} onClick={() => onViewChange("card")} ariaLabel="Card view"><LayoutGrid size={14} /></ToggleBtn>
@@ -165,15 +231,27 @@ function ToggleBtn({ active, onClick, ariaLabel, children }) {
   );
 }
 
-function CardGrid({ items, onOpen }) {
+function CardGrid({ items, onOpen, onEdit }) {
   return (
     <div className="grid grid-cols-2 gap-4">
-      {items.map((a) => <Card key={a.id} automation={a} onOpen={onOpen} />)}
+      {items.map((a) => <Card key={a.id} automation={a} onOpen={onOpen} onEdit={onEdit} />)}
     </div>
   );
 }
 
-function Card({ automation: a, onOpen }) {
+function buildRowMenu(a, onOpen, onEdit) {
+  return [
+    { label: "View",      icon: <Eye size={12} />,    onClick: () => onOpen?.(a.id) },
+    { label: "Edit",      icon: <Pencil size={12} />, onClick: () => onEdit?.(a) },
+    { label: "Duplicate", icon: <Copy size={12} />,   onClick: () => {} },
+    { label: "Pause",     icon: <Pause size={12} />,  onClick: () => {} },
+    "divider",
+    { label: "Delete",    icon: <Trash2 size={12} />, danger: true, onClick: () => {} },
+  ];
+}
+
+function Card({ automation: a, onOpen, onEdit }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const pill = statusOf(a);
   const trigger = findTriggerById(a.triggerType);
   const channelPill = a.channel === "instagram"
@@ -199,9 +277,22 @@ function Card({ automation: a, onOpen }) {
             {trigger?.icon ?? "⚙️"}
           </span>
         </div>
-        <button type="button" aria-label="More" onClick={(e) => { e.stopPropagation(); alert('Card menu mock'); }} className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted">
-          <MoreHorizontal size={14} />
-        </button>
+        <div className="relative" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            aria-label="More"
+            onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted"
+          >
+            <MoreHorizontal size={14} />
+          </button>
+          <DropdownMenu
+            open={menuOpen}
+            onClose={() => setMenuOpen(false)}
+            anchor="right"
+            items={buildRowMenu(a, onOpen, onEdit)}
+          />
+        </div>
       </div>
       <div className="flex flex-col gap-1">
         <h3 className="text-[15px] font-semibold text-ink-heading">{a.name}</h3>
@@ -222,7 +313,7 @@ function Card({ automation: a, onOpen }) {
           <button type="button" onClick={(e) => { e.stopPropagation(); onOpen?.(a.id); }} className="inline-flex h-8 items-center rounded-button border border-line bg-white px-3 text-[11px] font-medium text-ink-body hover:bg-surface-subtle">
             View
           </button>
-          <button type="button" onClick={(e) => { e.stopPropagation(); alert('Edit mock'); }} className="inline-flex h-8 items-center rounded-button px-3 text-[11px] font-medium text-ink-muted hover:bg-surface-subtle">
+          <button type="button" onClick={(e) => { e.stopPropagation(); onEdit?.(a); }} className="inline-flex h-8 items-center rounded-button px-3 text-[11px] font-medium text-ink-muted hover:bg-surface-subtle">
             Edit
           </button>
         </div>
@@ -241,7 +332,7 @@ function Meta({ label, value, sub }) {
   );
 }
 
-function TableView({ items, onOpen }) {
+function TableView({ items, onOpen, onEdit }) {
   return (
     <div className="overflow-hidden rounded-md border border-line bg-white">
       <table className="w-full text-[13px]">
@@ -276,9 +367,7 @@ function TableView({ items, onOpen }) {
                 <td className="px-4 py-3 text-right font-semibold text-ink-heading">{a.runsThisMonth}</td>
                 <td className="px-4 py-3 text-right text-ink-body">{a.successRate}%</td>
                 <td className="px-2 py-3 text-right">
-                  <button type="button" aria-label="More" onClick={(e) => { e.stopPropagation(); alert('Card menu mock'); }} className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted">
-                    <MoreHorizontal size={14} />
-                  </button>
+                  <RowMoreMenu automation={a} onOpen={onOpen} onEdit={onEdit} />
                 </td>
               </tr>
             );
@@ -291,6 +380,28 @@ function TableView({ items, onOpen }) {
 
 function Th({ children, align }) {
   return <th className={["px-4 py-3", align === "right" ? "text-right" : "text-left"].join(" ")}>{children}</th>;
+}
+
+function RowMoreMenu({ automation, onOpen, onEdit }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative inline-block" onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        aria-label="More"
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted"
+      >
+        <MoreHorizontal size={14} />
+      </button>
+      <DropdownMenu
+        open={open}
+        onClose={() => setOpen(false)}
+        anchor="right"
+        items={buildRowMenu(automation, onOpen, onEdit)}
+      />
+    </div>
+  );
 }
 
 /* ──────────── Empty state ──────────── */

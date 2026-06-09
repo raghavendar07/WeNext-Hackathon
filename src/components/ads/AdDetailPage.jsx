@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ChevronDown,
@@ -6,6 +6,7 @@ import {
   Sparkles,
   TrendingDown,
   TrendingUp,
+  X,
 } from "lucide-react";
 import { ChannelLogo, ChannelStack } from "./AdLogos.jsx";
 import AdPreview from "./AdPreview.jsx";
@@ -28,6 +29,9 @@ const METRIC_OPTIONS = [
 
 export default function AdDetailPage({ ad, onBack }) {
   const [tab, setTab] = useState("overview");
+  const [toast, setToast] = useState(null);
+  const [editCreativeOpen, setEditCreativeOpen] = useState(false);
+  useEffect(() => { if (toast) { const t = setTimeout(() => setToast(null), 2000); return () => clearTimeout(t); } }, [toast]);
   const pill = STATUS_PILLS[ad.status];
 
   return (
@@ -67,9 +71,71 @@ export default function AdDetailPage({ ad, onBack }) {
 
       <Tabs tab={tab} onChange={setTab} />
 
-      {tab === "overview" && <OverviewTab ad={ad} />}
-      {tab === "channels" && <ChannelsTab ad={ad} />}
-      {tab === "audience" && <AudienceTab ad={ad} />}
+      {tab === "overview" && <OverviewTab ad={ad} onToast={setToast} onEditCreative={() => setEditCreativeOpen(true)} />}
+      {tab === "channels" && <ChannelsTab ad={ad} onToast={setToast} />}
+      {tab === "audience" && <AudienceTab ad={ad} onToast={setToast} />}
+
+      {editCreativeOpen && (
+        <EditCreativeModal
+          ad={ad}
+          onCancel={() => setEditCreativeOpen(false)}
+          onSave={() => { setEditCreativeOpen(false); setToast("Creative saved"); }}
+        />
+      )}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 rounded-[8px] bg-[#111827] px-3 py-2 text-[12px] font-semibold text-white shadow-lg">{toast}</div>
+      )}
+    </div>
+  );
+}
+
+function EditCreativeModal({ ad, onCancel, onSave }) {
+  const [headline, setHeadline] = useState(ad.creative?.headline ?? "");
+  const [description, setDescription] = useState(ad.creative?.description ?? "");
+  return (
+    <div role="dialog" aria-modal="true" onClick={onCancel} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
+      <div onClick={(e) => e.stopPropagation()} className="flex w-full max-w-[480px] flex-col gap-4 rounded-md border border-line bg-white p-6 shadow-card">
+        <header className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-[16px] font-semibold text-ink-heading">Edit creative</h3>
+            <p className="text-[12px] font-medium text-ink-muted">Update headline, description, and media for this ad.</p>
+          </div>
+          <button type="button" onClick={onCancel} aria-label="Close" className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted">
+            <X size={16} />
+          </button>
+        </header>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">Headline</label>
+            <input
+              type="text"
+              value={headline}
+              onChange={(e) => setHeadline(e.target.value)}
+              placeholder="Catchy one-liner"
+              className="h-10 rounded-sm border border-line bg-white px-3 text-[13px] text-ink-heading"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Tell people why they should click"
+              className="min-h-[90px] resize-y rounded-sm border border-line bg-white px-3 py-2 text-[13px] text-ink-heading"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">Media</label>
+            <div className="flex h-[120px] items-center justify-center rounded-md border border-dashed border-line bg-canvas text-[12px] font-medium text-ink-muted">
+              {ad.creative?.thumb ? <span className="text-[40px]">{ad.creative.thumb}</span> : "Drop image / video"}
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 border-t border-line pt-3">
+          <button type="button" onClick={onCancel} className="inline-flex h-10 items-center rounded-button border border-line bg-white px-4 text-[13px] font-medium text-ink-body hover:bg-surface-subtle">Cancel</button>
+          <button type="button" onClick={onSave} className="inline-flex h-10 items-center rounded-button bg-cta-gradient px-5 text-[13px] font-semibold text-white">Save</button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -155,7 +221,7 @@ function Tabs({ tab, onChange }) {
 
 /* ──────────── Overview tab ──────────── */
 
-function OverviewTab({ ad }) {
+function OverviewTab({ ad, onToast, onEditCreative }) {
   const [metric, setMetric] = useState("results");
   const [range, setRange] = useState("7d");
   const data = useMemo(() => seriesFor(ad, metric), [ad, metric]);
@@ -191,14 +257,15 @@ function OverviewTab({ ad }) {
       </section>
 
       <div className="grid grid-cols-[1.5fr_1fr] gap-5">
-        <SuggestionsPanel ad={ad} />
-        <CreativeBreakdown ad={ad} />
+        <SuggestionsPanel ad={ad} onToast={onToast} />
+        <CreativeBreakdown ad={ad} onEditCreative={onEditCreative} />
       </div>
     </div>
   );
 }
 
-function SuggestionsPanel({ ad }) {
+function SuggestionsPanel({ ad, onToast }) {
+  const [applied, setApplied] = useState(new Set());
   if (!ad.suggestions?.length) {
     return (
       <section className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-line bg-canvas py-10 text-center">
@@ -214,41 +281,48 @@ function SuggestionsPanel({ ad }) {
         <h3 className="text-[14px] font-semibold text-ink-heading">Suggestions to improve</h3>
       </header>
       <div className="flex flex-col gap-2">
-        {ad.suggestions.map((s) => (
-          <article key={s.id} className="flex items-start justify-between gap-3 rounded-md border-l-4 border-brand-emerald bg-brand-50/30 p-3">
-            <div className="flex flex-1 flex-col gap-1">
-              <p className="text-[12px] leading-relaxed text-ink-body">{s.body}</p>
-              {s.why && (
-                <span className="group relative inline-flex w-fit items-center text-[11px] font-semibold text-brand-emerald hover:underline">
-                  Why?
-                  <span className="pointer-events-none invisible absolute left-0 top-full z-10 mt-1 w-[280px] rounded-md bg-ink-heading p-2 text-[11px] font-medium leading-snug text-white opacity-0 transition-opacity group-hover:visible group-hover:opacity-100">
-                    {s.why}
+        {ad.suggestions.map((s) => {
+          const isApplied = applied.has(s.id);
+          return (
+            <article key={s.id} className="flex items-start justify-between gap-3 rounded-md border-l-4 border-brand-emerald bg-brand-50/30 p-3">
+              <div className="flex flex-1 flex-col gap-1">
+                <p className={["text-[12px] leading-relaxed", isApplied ? "text-ink-muted line-through" : "text-ink-body"].join(" ")}>{s.body}</p>
+                {s.why && !isApplied && (
+                  <span className="group relative inline-flex w-fit items-center text-[11px] font-semibold text-brand-emerald hover:underline">
+                    Why?
+                    <span className="pointer-events-none invisible absolute left-0 top-full z-10 mt-1 w-[280px] rounded-md bg-ink-heading p-2 text-[11px] font-medium leading-snug text-white opacity-0 transition-opacity group-hover:visible group-hover:opacity-100">
+                      {s.why}
+                    </span>
                   </span>
-                </span>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => alert("Applied (mock)")}
-              className="inline-flex h-9 shrink-0 items-center rounded-button bg-brand-emerald px-3 text-[12px] font-semibold text-white"
-            >
-              {s.apply}
-            </button>
-          </article>
-        ))}
+                )}
+              </div>
+              <button
+                type="button"
+                disabled={isApplied}
+                onClick={() => {
+                  setApplied((prev) => new Set(prev).add(s.id));
+                  onToast?.("Applied");
+                }}
+                className={["inline-flex h-9 shrink-0 items-center rounded-button px-3 text-[12px] font-semibold text-white", isApplied ? "bg-ink-subtle cursor-not-allowed" : "bg-brand-emerald"].join(" ")}
+              >
+                {isApplied ? "Applied" : s.apply}
+              </button>
+            </article>
+          );
+        })}
       </div>
     </section>
   );
 }
 
-function CreativeBreakdown({ ad }) {
+function CreativeBreakdown({ ad, onEditCreative }) {
   return (
     <section className="flex flex-col gap-3 rounded-xl border border-line bg-white p-5">
       <header className="flex items-center justify-between">
         <h3 className="text-[14px] font-semibold text-ink-heading">Creative</h3>
         <button
           type="button"
-          onClick={() => alert("Edit creative (mock)")}
+          onClick={onEditCreative}
           className="text-[12px] font-semibold text-brand-emerald hover:underline"
         >
           Edit creative →
@@ -283,7 +357,7 @@ function CreativeBreakdown({ ad }) {
 
 /* ──────────── Channels tab ──────────── */
 
-function ChannelsTab({ ad }) {
+function ChannelsTab({ ad, onToast }) {
   const channelsRunning = ad.channels.filter((id) => ad.perChannel?.[id]);
   const best = useMemo(() => {
     if (!channelsRunning.length) return null;
@@ -335,7 +409,7 @@ function ChannelsTab({ ad }) {
         {best && (
           <button
             type="button"
-            onClick={() => alert("Applied suggested split (mock)")}
+            onClick={() => onToast?.("Budget rebalanced")}
             className="inline-flex h-9 w-fit items-center rounded-button bg-cta-gradient px-4 text-[12px] font-semibold text-white"
           >
             Apply suggested split
@@ -348,7 +422,7 @@ function ChannelsTab({ ad }) {
 
 /* ──────────── Audience tab ──────────── */
 
-function AudienceTab({ ad }) {
+function AudienceTab({ ad, onToast }) {
   const a = ad.audience;
   if (!a) return <p className="text-[13px] text-ink-muted">No audience data yet.</p>;
   return (
@@ -408,7 +482,7 @@ function AudienceTab({ ad }) {
         </div>
         <button
           type="button"
-          onClick={() => alert("Applied audience expansion (mock)")}
+          onClick={() => onToast?.("Applied")}
           className="inline-flex h-9 items-center rounded-button bg-brand-emerald px-3 text-[12px] font-semibold text-white"
         >
           Apply

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { CheckCircle2 } from "lucide-react";
 import FilterChip from "../../campaigns/FilterChip.jsx";
 import Switch from "../../Switch.jsx";
 import { SectionedCard, SettingsHeader } from "./SettingsTab.jsx";
@@ -17,9 +18,28 @@ export default function AvailabilitySection() {
   const [maxPerDay, setMaxPerDay] = useState(8);
   const [tz, setTz] = useState("Asia/Kolkata");
   const [notice, setNotice] = useState(2);
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(null), 2000);
+    return () => clearTimeout(id);
+  }, [toast]);
+
+  const showToast = (message) => setToast({ message, key: Date.now() });
+
+  const copyToAllWeekdays = () => {
+    const first = days[DAYS[0]];
+    const updated = { ...days };
+    ["Tue", "Wed", "Thu", "Fri"].forEach((d) => {
+      updated[d] = { ...updated[d], start: first.start, end: first.end, open: first.open };
+    });
+    setDays(updated);
+    showToast("Copied to all weekdays");
+  };
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="relative flex flex-col gap-5">
       <SettingsHeader
         title="Set your weekly hours"
         description="Configure which time slots accept new appointments."
@@ -69,7 +89,7 @@ export default function AvailabilitySection() {
                 {idx === 0 && (
                   <button
                     type="button"
-                    onClick={() => alert('Copied to all weekdays (mock)')}
+                    onClick={copyToAllWeekdays}
                     className="ml-auto text-[11px] font-semibold text-brand-emerald hover:underline"
                   >
                     Copy to all weekdays
@@ -133,7 +153,22 @@ export default function AvailabilitySection() {
         </Row>
       </SectionedCard>
 
-      <FormFooter />
+      <FormFooter
+        onDiscard={() => showToast("Changes discarded")}
+        onSave={() => showToast("Availability saved")}
+      />
+      {toast && <Toast key={toast.key} message={toast.message} />}
+    </div>
+  );
+}
+
+function Toast({ message }) {
+  return (
+    <div className="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
+      <div className="pointer-events-auto inline-flex items-center gap-2 rounded-md border border-line bg-ink-heading px-4 py-2.5 text-[13px] font-medium text-white shadow-xl">
+        <CheckCircle2 size={14} strokeWidth={2} className="text-brand-emerald" />
+        {message}
+      </div>
     </div>
   );
 }
@@ -164,19 +199,19 @@ function NumberInput({ value, onChange, suffix, compact }) {
   );
 }
 
-function FormFooter() {
+function FormFooter({ onDiscard, onSave }) {
   return (
     <div className="sticky bottom-0 flex items-center justify-end gap-2 border-t border-line bg-white px-6 py-4">
       <button
         type="button"
-        onClick={() => alert('Discarded (mock)')}
+        onClick={onDiscard}
         className="rounded-button border border-line bg-white px-4 py-2 text-[13px] font-medium text-ink-body hover:bg-surface-subtle"
       >
         Discard
       </button>
       <button
         type="button"
-        onClick={() => alert('Saved (mock)')}
+        onClick={onSave}
         className="rounded-button bg-cta-gradient px-4 py-2 text-[13px] font-medium text-white"
       >
         Save changes
