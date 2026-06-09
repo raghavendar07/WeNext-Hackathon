@@ -14,6 +14,7 @@ import Avatar from "./Avatar.jsx";
 import AssignedAgentPopover from "./AssignedAgentPopover.jsx";
 import PriorityPopover from "./PriorityPopover.jsx";
 import DropdownPopover, { PopoverItem } from "./DropdownPopover.jsx";
+import ContactProfileDrawer from "./ContactProfileDrawer.jsx";
 
 export default function ChatHeader({ contact, popover, onTogglePopover }) {
   const assignedRef = useRef(null);
@@ -22,6 +23,7 @@ export default function ChatHeader({ contact, popover, onTogglePopover }) {
   const searchInputRef = useRef(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
     if (!searchOpen) return;
@@ -44,7 +46,12 @@ export default function ChatHeader({ contact, popover, onTogglePopover }) {
 
   return (
     <header className="relative flex items-center justify-between border-b border-[#F0F2F5] px-5 py-[10px]">
-      <div className="flex min-w-0 items-center gap-[10px]">
+      <button
+        type="button"
+        onClick={() => setProfileOpen(true)}
+        className="flex min-w-0 items-center gap-[10px] rounded-md px-1 py-0.5 text-left transition-colors hover:bg-surface-subtle"
+        aria-label="View contact profile"
+      >
         <Avatar name={contact.name} palette={contact.palette} size={40} />
         <div className="flex min-w-0 flex-col">
           <span
@@ -60,7 +67,7 @@ export default function ChatHeader({ contact, popover, onTogglePopover }) {
             {contact.phone}
           </span>
         </div>
-      </div>
+      </button>
       <div className="flex items-center gap-[10px]">
         <div className="relative">
           <Pill
@@ -146,12 +153,18 @@ export default function ChatHeader({ contact, popover, onTogglePopover }) {
               label="View profile"
               onClick={() => {
                 onTogglePopover?.(null);
-                alert("Opening profile (mock)");
+                setProfileOpen(true);
               }}
             />
           </DropdownPopover>
         </div>
       </div>
+
+      <ContactProfileDrawer
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        contact={contact}
+      />
 
       {searchOpen && (
         <div className="absolute inset-x-0 top-0 z-40 flex items-center gap-2 border-b border-[#F0F2F5] bg-white px-5 py-[14px] shadow-chip">
