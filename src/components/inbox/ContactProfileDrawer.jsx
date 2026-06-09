@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   X,
   Phone,
@@ -17,6 +17,9 @@ import {
   MessageSquare,
   Download,
   Edit3,
+  Plus,
+  Trash2,
+  StickyNote,
 } from "lucide-react";
 import Avatar from "./Avatar.jsx";
 
@@ -50,6 +53,18 @@ const MOCK_PROFILE = {
 };
 
 export default function ContactProfileDrawer({ open, onClose, contact }) {
+  const [notes, setNotes] = useState([
+    {
+      id: 1,
+      body: MOCK_PROFILE.notes,
+      author: "Anita",
+      at: "2 days ago",
+      pinned: true,
+    },
+  ]);
+  const [draft, setDraft] = useState("");
+  const [pinNext, setPinNext] = useState(false);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => e.key === "Escape" && onClose?.();
@@ -62,6 +77,23 @@ export default function ContactProfileDrawer({ open, onClose, contact }) {
   const p = { ...MOCK_PROFILE, ...(contact?.profile ?? {}) };
   const phone = contact?.phone ?? "+91 98765 43210";
   const name = contact?.name ?? "Contact";
+
+  const addNote = () => {
+    const body = draft.trim();
+    if (!body) return;
+    setNotes((prev) => [
+      { id: Date.now(), body, author: "You", at: "just now", pinned: pinNext },
+      ...prev,
+    ]);
+    setDraft("");
+    setPinNext(false);
+  };
+
+  const removeNote = (id) => setNotes((prev) => prev.filter((n) => n.id !== id));
+  const togglePin = (id) =>
+    setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, pinned: !n.pinned } : n)));
+
+  const sortedNotes = [...notes].sort((a, b) => Number(b.pinned) - Number(a.pinned));
 
   return (
     <div className="fixed inset-0 z-[60] flex justify-end">
@@ -161,16 +193,92 @@ export default function ContactProfileDrawer({ open, onClose, contact }) {
 
         {/* Notes */}
         <Section
-          title="Notes"
-          action={
-            <button onClick={() => alert("Edit notes mock")} className="text-[11px] font-semibold text-brand-emerald hover:underline">
-              Edit
-            </button>
-          }
+          title={`Notes${notes.length > 0 ? ` (${notes.length})` : ""}`}
         >
-          <p className="rounded-[8px] bg-amber-50/60 p-2.5 text-[12px] leading-relaxed text-[#475569]">
-            {p.notes}
-          </p>
+          <div className="rounded-[10px] border border-[#F0F2F5] bg-white p-2.5 focus-within:border-brand-emerald">
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                  e.preventDefault();
+                  addNote();
+                }
+              }}
+              rows={2}
+              placeholder="Add a note about this customer…"
+              className="w-full resize-none border-none bg-transparent text-[12px] leading-relaxed text-ink-heading placeholder:text-ink-muted focus:outline-none"
+            />
+            <div className="mt-1.5 flex items-center justify-between">
+              <label className="inline-flex items-center gap-1.5 text-[11px] font-medium text-ink-muted">
+                <input
+                  type="checkbox"
+                  checked={pinNext}
+                  onChange={(e) => setPinNext(e.target.checked)}
+                  className="h-3 w-3 accent-brand-emerald"
+                />
+                Pin to top
+              </label>
+              <button
+                type="button"
+                onClick={addNote}
+                disabled={!draft.trim()}
+                className="inline-flex items-center gap-1 rounded-[6px] bg-brand-emerald px-2.5 py-1 text-[11px] font-semibold text-white disabled:opacity-40"
+              >
+                <Plus size={11} /> Add note
+              </button>
+            </div>
+          </div>
+
+          {sortedNotes.length > 0 && (
+            <div className="mt-2 space-y-1.5">
+              {sortedNotes.map((n) => (
+                <div
+                  key={n.id}
+                  className={[
+                    "group relative rounded-[8px] border p-2.5 pr-8",
+                    n.pinned ? "border-amber-200 bg-amber-50/70" : "border-[#F0F2F5] bg-[#FAFAF9]",
+                  ].join(" ")}
+                >
+                  {n.pinned && (
+                    <StickyNote
+                      size={10}
+                      className="absolute right-2.5 top-2.5 text-amber-500"
+                      strokeWidth={2}
+                    />
+                  )}
+                  <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-[#334155]">
+                    {n.body}
+                  </p>
+                  <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-ink-muted">
+                    <span>
+                      <span className="font-semibold text-ink-body">{n.author}</span> · {n.at}
+                    </span>
+                    <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => togglePin(n.id)}
+                        className="rounded p-0.5 hover:bg-white hover:text-ink-body"
+                        aria-label={n.pinned ? "Unpin" : "Pin"}
+                        title={n.pinned ? "Unpin" : "Pin"}
+                      >
+                        <StickyNote size={11} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeNote(n.id)}
+                        className="rounded p-0.5 hover:bg-red-50 hover:text-danger"
+                        aria-label="Delete note"
+                        title="Delete"
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </Section>
 
         {/* Recent orders */}
