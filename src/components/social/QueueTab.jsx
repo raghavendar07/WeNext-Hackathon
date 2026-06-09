@@ -6,7 +6,7 @@ import { POSTS, dayKey, findPlatform, formatDayHeader, formatRelative, formatSch
 
 const LOGO_BY_ID = { linkedin: LinkedinLogo, facebook: FacebookLogo, instagram: InstagramLogo };
 
-export default function QueueTab({ accounts, onCreate }) {
+export default function QueueTab({ accounts, onCreate, onOpen }) {
   const [toast, setToast] = useState(null);
   useEffect(() => { if (toast) { const t = setTimeout(() => setToast(null), 2000); return () => clearTimeout(t); } }, [toast]);
 
@@ -42,7 +42,7 @@ export default function QueueTab({ accounts, onCreate }) {
               {formatDayHeader(day.key)}
             </h2>
             <div className="flex flex-col gap-2">
-              {day.items.map((p) => <PostRow key={p.id} post={p} onToast={setToast} />)}
+              {day.items.map((p) => <PostRow key={p.id} post={p} onToast={setToast} onOpen={onOpen} />)}
             </div>
           </section>
         ))}
@@ -77,11 +77,14 @@ function DropdownMenu({ open, onClose, anchor = "right", items }) {
   );
 }
 
-function PostRow({ post, onToast }) {
+function PostRow({ post, onToast, onOpen }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const isFailed = post.status === "failed";
   return (
-    <article className="flex items-start gap-3 rounded-md border border-line bg-white p-4">
+    <article
+      onClick={() => onOpen?.(post)}
+      className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-white p-4 transition-colors hover:bg-surface-subtle"
+    >
       <PostThumb post={post} />
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex items-center justify-between gap-2">
@@ -97,7 +100,8 @@ function PostRow({ post, onToast }) {
                 onClose={() => setMenuOpen(false)}
                 anchor="right"
                 items={[
-                  { label: "Edit",       icon: <Pencil size={12} />,        onClick: () => onToast?.("Opening editor…") },
+                  { label: "View",       icon: <Pencil size={12} />,        onClick: () => onOpen?.(post) },
+                  { label: "Edit",       icon: <Pencil size={12} />,        onClick: () => onOpen?.(post) },
                   { label: "Duplicate",  icon: <Copy size={12} />,          onClick: () => onToast?.("Post duplicated") },
                   { label: "Reschedule", icon: <CalendarClock size={12} />, onClick: () => onToast?.("Reschedule (mock)") },
                   { label: "Pause",      icon: <Pause size={12} />,         onClick: () => onToast?.("Post paused") },
@@ -111,14 +115,14 @@ function PostRow({ post, onToast }) {
         <p className="line-clamp-2 text-[13px] leading-snug text-ink-body">{post.caption}</p>
         <div className="flex items-center justify-between gap-2">
           <StatusLine post={post} />
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
             {isFailed ? (
               <button type="button" onClick={() => onToast?.("Retrying post…")} className="inline-flex h-8 items-center gap-1 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
                 <RefreshCw size={12} /> Try again
               </button>
             ) : (
               <>
-                <button type="button" onClick={() => onToast?.("Opening editor…")} className="inline-flex h-8 items-center gap-1 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
+                <button type="button" onClick={() => onOpen?.(post)} className="inline-flex h-8 items-center gap-1 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
                   <Pencil size={12} /> Edit
                 </button>
                 <button type="button" onClick={() => onToast?.("Post paused")} className="inline-flex h-8 items-center gap-1 rounded-button px-3 text-[12px] font-medium text-ink-muted hover:bg-surface-subtle">

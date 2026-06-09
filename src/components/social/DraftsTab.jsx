@@ -6,7 +6,7 @@ import { POSTS, formatRelative } from "./data.js";
 
 const LOGO_BY_ID = { linkedin: LinkedinLogo, facebook: FacebookLogo, instagram: InstagramLogo };
 
-export default function DraftsTab({ onCreate }) {
+export default function DraftsTab({ onCreate, onOpen }) {
   const drafts = useMemo(() => POSTS.filter((p) => p.status === "draft").sort((a, b) => (b.savedAt ?? "").localeCompare(a.savedAt ?? "")), []);
   const [schedulePost, setSchedulePost] = useState(null);
   const [deletePost, setDeletePost] = useState(null);
@@ -29,7 +29,7 @@ export default function DraftsTab({ onCreate }) {
 
   return (
     <div className="mx-auto flex w-full max-w-[800px] flex-col gap-3">
-      {drafts.map((p) => <DraftRow key={p.id} post={p} onSchedule={() => setSchedulePost(p)} onDelete={() => setDeletePost(p)} />)}
+      {drafts.map((p) => <DraftRow key={p.id} post={p} onSchedule={() => setSchedulePost(p)} onDelete={() => setDeletePost(p)} onOpen={onOpen} />)}
       {schedulePost && (
         <ScheduleDraftModal
           post={schedulePost}
@@ -105,10 +105,13 @@ function DeleteDraftModal({ post, onCancel, onConfirm }) {
   );
 }
 
-function DraftRow({ post, onSchedule, onDelete }) {
+function DraftRow({ post, onSchedule, onDelete, onOpen }) {
   const noPlatform = post.channels.length === 0;
   return (
-    <article className="flex items-start gap-3 rounded-md border border-line bg-white p-4">
+    <article
+      onClick={() => onOpen?.(post)}
+      className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-white p-4 transition-colors hover:bg-surface-subtle"
+    >
       <PostThumb post={post} />
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex items-center justify-between gap-2">
@@ -133,9 +136,12 @@ function DraftRow({ post, onSchedule, onDelete }) {
             <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ink-subtle" />
             Draft · Not scheduled
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
             <button type="button" onClick={onSchedule} className="inline-flex h-8 items-center gap-1 rounded-button bg-cta-gradient px-3 text-[12px] font-semibold text-white hover:opacity-90">
               <CalendarPlus size={12} /> Schedule
+            </button>
+            <button type="button" onClick={() => onOpen?.(post)} className="inline-flex h-8 items-center rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle">
+              Edit
             </button>
             <button type="button" onClick={onDelete} className="inline-flex h-8 items-center gap-1 rounded-button px-3 text-[12px] font-medium text-danger hover:bg-danger-bg">
               <Trash2 size={12} /> Delete

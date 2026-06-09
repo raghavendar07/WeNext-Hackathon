@@ -4,7 +4,7 @@ import CalendarDateControls from "./CalendarDateControls.jsx";
 import CalendarWeekView from "./CalendarWeekView.jsx";
 import { ROW_HEIGHT, TIME_COL_W, TIME_RANGE, formatTimeOfDay } from "./data.js";
 
-export default function CalendarTab() {
+export default function CalendarTab({ onOpen }) {
   const [view, setView] = useState("week");
   const [query, setQuery] = useState("");
 
@@ -18,7 +18,7 @@ export default function CalendarTab() {
       />
 
       <div className="pt-1">
-        {view === "week" && <CalendarWeekView activeCategory="all" />}
+        {view === "week" && <CalendarWeekView activeCategory="all" onOpen={onOpen} />}
         {view === "day" && <DayView />}
         {view === "month" && <MonthView />}
       </div>

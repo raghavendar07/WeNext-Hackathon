@@ -30,6 +30,7 @@ import {
   formatCurrency,
 } from "./data.js";
 import { PLATFORM_META, PlatformLogo } from "./platformLogos.jsx";
+import ProductDetailPage from "./ProductDetailPage.jsx";
 
 const STATUS_FILTERS = [
   { id: "all",          label: "All" },
@@ -58,10 +59,18 @@ export default function CatalogPage() {
   const [query, setQuery] = useState("");
   const [view, setView] = useState("table");
   const [openProduct, setOpenProduct] = useState(null);
+  const [viewingProductId, setViewingProductId] = useState(null);
   const [showConnectionsModal, setShowConnectionsModal] = useState(false);
   const [showSyncPanel, setShowSyncPanel] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [toast, setToast] = useState(null);
+
+  if (viewingProductId) {
+    const product = PRODUCTS.find((p) => p.id === viewingProductId);
+    if (product) {
+      return <ProductDetailPage product={product} onBack={() => setViewingProductId(null)} />;
+    }
+  }
 
   const showToast = (message, tone = "success") => {
     setToast({ message, tone });
@@ -178,9 +187,17 @@ export default function CatalogPage() {
       {filtered.length === 0 ? (
         <PlatformEmptyState platform={platform} onManage={() => setShowConnectionsModal(true)} />
       ) : view === "table" ? (
-        <ProductTable products={filtered} onOpen={setOpenProduct} />
+        <ProductTable
+          products={filtered}
+          onOpen={(p) => setViewingProductId(p.id)}
+          onQuickView={setOpenProduct}
+        />
       ) : (
-        <ProductGrid products={filtered} onOpen={setOpenProduct} />
+        <ProductGrid
+          products={filtered}
+          onOpen={(p) => setViewingProductId(p.id)}
+          onQuickView={setOpenProduct}
+        />
       )}
 
       {openProduct && (
@@ -299,7 +316,7 @@ function PlatformFilterRow({ active, onChange }) {
 
 /* ───── Product table ───── */
 
-function ProductTable({ products, onOpen }) {
+function ProductTable({ products, onOpen, onQuickView }) {
   return (
     <div className="overflow-hidden rounded-md border border-line bg-white">
       <table className="w-full text-[13px]">
@@ -340,15 +357,25 @@ function ProductTable({ products, onOpen }) {
                     {pill.label}
                   </span>
                 </td>
-                <td className="px-2 py-3 text-right">
-                  <button
-                    type="button"
-                    aria-label="Row actions"
-                    onClick={(e) => e.stopPropagation()}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted"
-                  >
-                    <MoreHorizontal size={14} />
-                  </button>
+                <td className="px-2 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-end gap-1">
+                    <button
+                      type="button"
+                      aria-label="Quick view"
+                      title="Quick view"
+                      onClick={() => onQuickView?.(p)}
+                      className="inline-flex h-8 items-center rounded-xs px-2 text-[11px] font-semibold text-brand-emerald hover:bg-surface-muted"
+                    >
+                      Quick view
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Row actions"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-xs text-ink-muted hover:bg-surface-muted"
+                    >
+                      <MoreHorizontal size={14} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             );

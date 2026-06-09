@@ -17,7 +17,7 @@ const ENGAGEMENT = {
   low:    { label: "Low",    bars: 1, tone: "text-danger" },
 };
 
-export default function CustomersPage() {
+export default function CustomersPage({ onOpenCustomer }) {
   const [query, setQuery] = useState("");
   const [addOpen, setAddOpen] = useState(false);
 
@@ -80,7 +80,11 @@ export default function CustomersPage() {
               const life = LIFECYCLE[c.lifecycle] ?? LIFECYCLE.active;
               const eng = ENGAGEMENT[c.engagement] ?? ENGAGEMENT.medium;
               return (
-                <tr key={c.id} className="border-b border-line last:border-0 hover:bg-surface-subtle">
+                <tr
+                  key={c.id}
+                  onClick={() => onOpenCustomer?.(c)}
+                  className="cursor-pointer border-b border-line last:border-0 hover:bg-surface-subtle"
+                >
                   <Td>
                     <div className="flex items-center gap-2.5">
                       <Avatar name={c.name} palette={c.palette} size={32} />

@@ -3,6 +3,7 @@ import TabBar from "../inbox/TabBar.jsx";
 import CalendarTab from "./calendar/CalendarTab.jsx";
 import MeetingsTab from "./meetings/MeetingsTab.jsx";
 import SettingsTab from "./settings/SettingsTab.jsx";
+import AppointmentDetailPage from "./AppointmentDetailPage.jsx";
 
 const TABS = [
   { id: "calendar", label: "Calendar" },
@@ -12,6 +13,16 @@ const TABS = [
 
 export default function AppointmentsPage() {
   const [tab, setTab] = useState("calendar");
+  const [viewing, setViewing] = useState(null);
+
+  if (viewing) {
+    return (
+      <AppointmentDetailPage
+        appointment={viewing}
+        onBack={() => setViewing(null)}
+      />
+    );
+  }
 
   return (
     <div className="flex h-full flex-col gap-5">
@@ -29,8 +40,8 @@ export default function AppointmentsPage() {
       )}
 
       <div className="flex-1">
-        {tab === "calendar" && <CalendarTab />}
-        {tab === "meetings" && <MeetingsTab />}
+        {tab === "calendar" && <CalendarTab onOpen={setViewing} />}
+        {tab === "meetings" && <MeetingsTab onOpen={setViewing} />}
         {tab === "settings" && <SettingsTab />}
       </div>
     </div>

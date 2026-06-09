@@ -10,7 +10,7 @@ const SOURCE_OPTS = ["All", "Website", "Instagram", "WhatsApp", "Ads", "Referral
 const OWNER_OPTS = ["All", "Aisha K.", "Rahul V.", "Priya M.", "Karthik R."];
 const STATUS_OPTS = ["All", "Hot", "Warm", "Cold"];
 
-export default function LeadsTablePage() {
+export default function LeadsTablePage({ onOpenLead }) {
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState({ status: "All", source: "All", owner: "All" });
   const [openModal, setOpenModal] = useState(null); // 'filters' | 'import' | 'add'
@@ -101,9 +101,10 @@ export default function LeadsTablePage() {
               return (
                 <tr
                   key={lead.id}
+                  onClick={() => onOpenLead?.(lead)}
                   className={[
-                    "border-b border-line last:border-0",
-                    isPriority ? "bg-danger-bg/30" : "hover:bg-surface-subtle",
+                    "cursor-pointer border-b border-line last:border-0",
+                    isPriority ? "bg-danger-bg/30 hover:bg-danger-bg/40" : "hover:bg-surface-subtle",
                   ].join(" ")}
                 >
                   <Td>

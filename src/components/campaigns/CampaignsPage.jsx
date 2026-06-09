@@ -5,6 +5,7 @@ import CampaignsHeaderBar from "./CampaignsHeaderBar.jsx";
 import CampaignsFilterRow from "./CampaignsFilterRow.jsx";
 import CampaignKpiRow from "./CampaignKpiRow.jsx";
 import CampaignCard from "./CampaignCard.jsx";
+import CampaignDetailPage from "./CampaignDetailPage.jsx";
 import TemplatesPage from "../templates/TemplatesPage.jsx";
 import CreateCampaignDrawer from "./create/CreateCampaignDrawer.jsx";
 
@@ -112,6 +113,7 @@ export default function CampaignsPage() {
   const [type, setType] = useState("all");
   const [query, setQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [route, setRoute] = useState({ name: "list" });
 
   const filtered = useMemo(() => {
     const statusValue = STATUS_TO_VALUE[status];
@@ -178,6 +180,15 @@ export default function CampaignsPage() {
     ? `Showing ${filtered.length} of ${CAMPAIGNS.length} campaigns`
     : null;
 
+  if (route.name === "detail") {
+    return (
+      <CampaignDetailPage
+        campaign={route.campaign}
+        onBack={() => setRoute({ name: "list" })}
+      />
+    );
+  }
+
   return (
     <div className="flex h-full flex-col">
       {/* Layer 1 — Page tabs */}
@@ -220,7 +231,11 @@ export default function CampaignsPage() {
             ) : (
               <div className="flex flex-col gap-4">
                 {filtered.map((c) => (
-                  <CampaignCard key={c.id} campaign={c} />
+                  <CampaignCard
+                    key={c.id}
+                    campaign={c}
+                    onOpen={(camp) => setRoute({ name: "detail", campaign: camp })}
+                  />
                 ))}
               </div>
             )}

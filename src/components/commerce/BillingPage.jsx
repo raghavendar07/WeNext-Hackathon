@@ -21,6 +21,7 @@ import {
   formatDate,
   billingMetrics,
 } from "./data.js";
+import InvoiceDetailPage from "./InvoiceDetailPage.jsx";
 
 const TYPE_FILTERS = [
   { id: "all",      label: "All" },
@@ -69,8 +70,16 @@ export default function BillingPage() {
   const [query, setQuery] = useState("");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [viewingInvoiceId, setViewingInvoiceId] = useState(null);
   const metrics = useMemo(() => billingMetrics(PAYMENTS, INVOICES), []);
   const items = useMemo(() => buildUnified(), []);
+
+  if (viewingInvoiceId) {
+    const invoice = INVOICES.find((i) => i.id === viewingInvoiceId);
+    if (invoice) {
+      return <InvoiceDetailPage invoice={invoice} onBack={() => setViewingInvoiceId(null)} />;
+    }
+  }
 
   const filtered = useMemo(() => {
     return items.filter((it) => {
@@ -195,8 +204,16 @@ export default function BillingPage() {
               const methodLabel = it.method
                 ? PAYMENT_METHODS.find((m) => m.id === it.method)?.label
                 : "—";
+              const clickable = it.kind === "invoice";
               return (
-                <tr key={`${it.kind}-${it.id}`} className="border-t border-line transition-colors hover:bg-surface-subtle">
+                <tr
+                  key={`${it.kind}-${it.id}`}
+                  onClick={clickable ? () => setViewingInvoiceId(it.invoiceId ?? it.id) : undefined}
+                  className={[
+                    "border-t border-line transition-colors hover:bg-surface-subtle",
+                    clickable ? "cursor-pointer" : "",
+                  ].join(" ")}
+                >
                   <td className="px-4 py-3 text-ink-muted">{formatDate(it.date)}</td>
                   <td className="px-4 py-3">
                     <TypeBadge kind={it.kind} />
@@ -215,7 +232,7 @@ export default function BillingPage() {
                       </span>
                     )}
                   </td>
-                  <td className="px-2 py-3">
+                  <td className="px-2 py-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
                       {it.kind === "invoice" && (it.status === "draft" || it.status === "sent" || it.status === "overdue") && (
                         <IconAction label="Send" icon={Send} />

@@ -8,7 +8,7 @@ const PLATFORM_TONE = {
   instagram: "border-[#FCC2D7] bg-[#FCE7F3] text-[#DB2777]",
 };
 
-export default function CalendarTab() {
+export default function CalendarTab({ onOpen }) {
   const [anchor, setAnchor] = useState(() => new Date("2026-05-04T00:00:00"));
 
   const days = useMemo(() => {
@@ -84,9 +84,10 @@ export default function CalendarTab() {
                     key={p.id}
                     type="button"
                     draggable
+                    onClick={() => onOpen?.(p)}
                     onDragStart={(e) => e.dataTransfer.setData('postId', p.id)}
                     className={[
-                      "flex h-6 w-full items-center gap-1 rounded-xs border px-1.5 text-[10px] font-medium",
+                      "flex h-6 w-full items-center gap-1 rounded-xs border px-1.5 text-[10px] font-medium hover:opacity-80",
                       PLATFORM_TONE[p.channels[0]] ?? "border-line bg-canvas text-ink-muted",
                     ].join(" ")}
                   >

@@ -7,6 +7,7 @@ import {
   formatDate,
   abandonedSummary,
 } from "./data.js";
+import OrderDetailPage from "./OrderDetailPage.jsx";
 
 const STATUS_FILTERS = [
   { id: "all",       label: "All Orders" },
@@ -31,6 +32,7 @@ function writeStatusToURL(status) {
 export default function OrdersPage({ onNavigate }) {
   const [status, setStatus] = useState(() => readStatusFromURL());
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [viewingOrderId, setViewingOrderId] = useState(null);
 
   useEffect(() => {
     writeStatusToURL(status);
@@ -41,6 +43,13 @@ export default function OrdersPage({ onNavigate }) {
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
+
+  if (viewingOrderId) {
+    const order = ORDERS.find((o) => o.id === viewingOrderId);
+    if (order) {
+      return <OrderDetailPage order={order} onBack={() => setViewingOrderId(null)} />;
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -85,14 +94,14 @@ export default function OrdersPage({ onNavigate }) {
         })}
       </div>
 
-      {status === "all"       && <AllOrdersContent />}
-      {status === "abandoned" && <AbandonedContent onNavigate={onNavigate} />}
-      {status === "refunded"  && <RefundedContent />}
+      {status === "all"       && <AllOrdersContent onOpenOrder={setViewingOrderId} />}
+      {status === "abandoned" && <AbandonedContent onNavigate={onNavigate} onOpenOrder={setViewingOrderId} />}
+      {status === "refunded"  && <RefundedContent onOpenOrder={setViewingOrderId} />}
     </div>
   );
 }
 
-function AllOrdersContent() {
+function AllOrdersContent({ onOpenOrder }) {
   const [query, setQuery] = useState("");
   const filtered = useMemo(() => {
     return ORDERS.filter((o) => {
@@ -116,12 +125,12 @@ function AllOrdersContent() {
         />
       </div>
 
-      <OrdersTable orders={filtered} />
+      <OrdersTable orders={filtered} onOpenOrder={onOpenOrder} />
     </div>
   );
 }
 
-function AbandonedContent({ onNavigate }) {
+function AbandonedContent({ onNavigate, onOpenOrder }) {
   const [query, setQuery] = useState("");
   const abandoned = abandonedSummary(ORDERS);
   const filtered = useMemo(() => {
@@ -169,12 +178,12 @@ function AbandonedContent({ onNavigate }) {
         />
       </div>
 
-      <OrdersTable orders={filtered} />
+      <OrdersTable orders={filtered} onOpenOrder={onOpenOrder} />
     </div>
   );
 }
 
-function RefundedContent() {
+function RefundedContent({ onOpenOrder }) {
   const [query, setQuery] = useState("");
   const filtered = useMemo(() => {
     const list = ORDERS.filter((o) => o.status === "refunded");
@@ -209,7 +218,11 @@ function RefundedContent() {
           </thead>
           <tbody>
             {filtered.map((o) => (
-              <tr key={o.id} className="cursor-pointer border-t border-line transition-colors hover:bg-surface-subtle">
+              <tr
+                key={o.id}
+                onClick={() => onOpenOrder?.(o.id)}
+                className="cursor-pointer border-t border-line transition-colors hover:bg-surface-subtle"
+              >
                 <td className="px-4 py-3 font-semibold text-ink-heading">{o.id}</td>
                 <td className="px-4 py-3 text-ink-body">{o.customer}</td>
                 <td className="px-4 py-3 text-ink-muted">{formatDate(o.date)}</td>
@@ -245,7 +258,7 @@ function RefundedContent() {
   );
 }
 
-function OrdersTable({ orders }) {
+function OrdersTable({ orders, onOpenOrder }) {
   return (
     <div className="overflow-hidden rounded-md border border-line bg-white">
       <table className="w-full text-[13px]">
@@ -265,7 +278,11 @@ function OrdersTable({ orders }) {
           {orders.map((o) => {
             const pill = ORDER_STATUS_PILLS[o.status];
             return (
-              <tr key={o.id} className="cursor-pointer border-t border-line transition-colors hover:bg-surface-subtle">
+              <tr
+                key={o.id}
+                onClick={() => onOpenOrder?.(o.id)}
+                className="cursor-pointer border-t border-line transition-colors hover:bg-surface-subtle"
+              >
                 <td className="px-4 py-3 font-semibold text-ink-heading">{o.id}</td>
                 <td className="px-4 py-3 text-ink-body">{o.customer}</td>
                 <td className="px-4 py-3 text-ink-muted">{formatDate(o.date)}</td>

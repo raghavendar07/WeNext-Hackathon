@@ -11,15 +11,23 @@ const CATEGORY_TINTS = {
   push:     { bg: "bg-info-bg",             text: "text-info" },
 };
 
-export default function CampaignCard({ campaign }) {
+export default function CampaignCard({ campaign, onOpen }) {
   const tint = CATEGORY_TINTS[campaign.category] ?? CATEGORY_TINTS.email;
   const Icon = campaign.icon ?? Mail;
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState(null);
   useEffect(() => { if (toast) { const t = setTimeout(() => setToast(null), 2000); return () => clearTimeout(t); } }, [toast]);
 
+  const openDetail = () => onOpen?.(campaign);
+
   return (
-    <article className="flex flex-col gap-4 rounded-md border border-line bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+    <article
+      role="button"
+      tabIndex={0}
+      onClick={openDetail}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDetail(); } }}
+      className="flex cursor-pointer flex-col gap-4 rounded-md border border-line bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-colors hover:border-[#D1D5DB]"
+    >
       {/* Row 1 — identity + menu */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-start gap-3">
@@ -48,7 +56,7 @@ export default function CampaignCard({ campaign }) {
           </div>
         </div>
 
-        <div className="relative">
+        <div className="relative" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
             aria-label="Campaign actions"
@@ -62,7 +70,7 @@ export default function CampaignCard({ campaign }) {
             onClose={() => setMenuOpen(false)}
             anchor="right"
             items={[
-              { label: "View",      icon: <Eye size={12} />,    onClick: () => setToast("Opening campaign…") },
+              { label: "View",      icon: <Eye size={12} />,    onClick: openDetail },
               { label: "Edit",      icon: <Pencil size={12} />, onClick: () => setToast("Opening editor…") },
               { label: "Duplicate", icon: <Copy size={12} />,   onClick: () => setToast("Campaign duplicated") },
               "divider",

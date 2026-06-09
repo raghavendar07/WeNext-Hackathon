@@ -11,6 +11,29 @@ import {
   weekDates,
 } from "./data.js";
 
+const STATUS_MAP = {
+  confirmed: "upcoming",
+  pending:   "upcoming",
+  completed: "completed",
+  cancelled: "cancelled",
+};
+
+function eventToAppointment(event, dateObj) {
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const when = `${months[dateObj.getMonth()]} ${dateObj.getDate()}, ${formatTimeOfDay(event.start)}`;
+  const duration = `${Math.round((event.end - event.start) * 60)} min`;
+  return {
+    id: event.id,
+    title: event.title,
+    category: event.category,
+    status: STATUS_MAP[event.status] ?? "upcoming",
+    customer: event.customer,
+    when,
+    duration,
+    attendees: [event.customer],
+  };
+}
+
 const DOW = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 function clean12h(h) {
@@ -19,7 +42,7 @@ function clean12h(h) {
   return `${h12} ${ampm}`;
 }
 
-export default function CalendarWeekView({ activeCategory = "all" }) {
+export default function CalendarWeekView({ activeCategory = "all", onOpen }) {
   const dates = weekDates();
   const today = new Date();
   const todayIdx = dates.findIndex(
@@ -157,12 +180,14 @@ export default function CalendarWeekView({ activeCategory = "all" }) {
         })}
 
         {/* Event overlays per day column */}
-        {dates.map((_, colIdx) => (
+        {dates.map((dateObj, colIdx) => (
           <DayColumnOverlay
             key={`col-${colIdx}`}
             colIdx={colIdx}
+            dateObj={dateObj}
             activeCategory={activeCategory}
             isPastEvent={isPastEvent}
+            onOpen={onOpen}
           />
         ))}
 
@@ -185,7 +210,7 @@ export default function CalendarWeekView({ activeCategory = "all" }) {
   );
 }
 
-function DayColumnOverlay({ colIdx, activeCategory, isPastEvent }) {
+function DayColumnOverlay({ colIdx, dateObj, activeCategory, isPastEvent, onOpen }) {
   const colEvents = EVENTS.filter((e) => e.day === colIdx);
   const hourSpan = TIME_RANGE.end - TIME_RANGE.start;
   return (
@@ -202,7 +227,14 @@ function DayColumnOverlay({ colIdx, activeCategory, isPastEvent }) {
         {colEvents.map((e) => {
           const dim = activeCategory !== "all" && activeCategory !== e.category;
           return (
-            <div key={e.id} className="pointer-events-auto">
+            <div
+              key={e.id}
+              className="pointer-events-auto cursor-pointer"
+              onClick={(evt) => {
+                evt.stopPropagation();
+                onOpen?.(eventToAppointment(e, dateObj));
+              }}
+            >
               <CalendarEventBlock
                 event={e}
                 dim={dim}

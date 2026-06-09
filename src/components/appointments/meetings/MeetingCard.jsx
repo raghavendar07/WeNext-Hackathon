@@ -23,7 +23,7 @@ const STATUS_PILLS = {
 
 const PAST_STATUSES = new Set(["completed", "cancelled", "no-show"]);
 
-export default function MeetingCard({ meeting }) {
+export default function MeetingCard({ meeting, onOpen }) {
   const cfg = CATEGORIES[meeting.category] ?? CATEGORIES.demo;
   const pill = STATUS_PILLS[meeting.status] ?? STATUS_PILLS.upcoming;
   const isPast = PAST_STATUSES.has(meeting.status);
@@ -37,8 +37,9 @@ export default function MeetingCard({ meeting }) {
   return (
     <>
     <article
+      onClick={() => onOpen?.(meeting)}
       className={[
-        "flex min-h-[112px] items-center justify-between gap-4 rounded-md border border-line bg-white px-6 py-5",
+        "flex min-h-[112px] cursor-pointer items-center justify-between gap-4 rounded-md border border-line bg-white px-6 py-5",
         "shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-chip",
         isPast ? "opacity-80" : "opacity-100",
       ].join(" ")}
@@ -69,7 +70,7 @@ export default function MeetingCard({ meeting }) {
             </h3>
             <button
               type="button"
-              onClick={() => setCustomerOpen(true)}
+              onClick={(e) => { e.stopPropagation(); setCustomerOpen(true); }}
               className="text-left text-[12px] font-medium text-ink-muted hover:text-ink-heading"
             >
               {meeting.customer}
@@ -88,14 +89,16 @@ export default function MeetingCard({ meeting }) {
         {meeting.joinable && (
           <button
             type="button"
-            onClick={() => setJoinOpen(true)}
+            onClick={(e) => { e.stopPropagation(); setJoinOpen(true); }}
             className="inline-flex h-9 items-center gap-2 rounded-button bg-cta-gradient px-3 text-[12px] font-medium text-white"
           >
             <Video size={14} strokeWidth={1.75} />
             Join
           </button>
         )}
-        <MeetingMenu open={menuOpen} setOpen={setMenuOpen} />
+        <div onClick={(e) => e.stopPropagation()}>
+          <MeetingMenu open={menuOpen} setOpen={setMenuOpen} />
+        </div>
         <span
           className={[
             "inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-[10px] font-semibold",

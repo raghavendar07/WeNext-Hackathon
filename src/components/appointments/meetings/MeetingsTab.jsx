@@ -14,7 +14,7 @@ const STATUS_CHIPS = [
   { id: "no-show",     label: "No-show" },
 ];
 
-export default function MeetingsTab() {
+export default function MeetingsTab({ onOpen }) {
   const [status, setStatus] = useState("all");
   const [query, setQuery] = useState("");
 
@@ -91,7 +91,7 @@ export default function MeetingsTab() {
               </header>
               <div className="flex flex-col gap-3">
                 {group.items.map((m) => (
-                  <MeetingCard key={m.id} meeting={m} />
+                  <MeetingCard key={m.id} meeting={m} onOpen={onOpen} />
                 ))}
               </div>
             </section>

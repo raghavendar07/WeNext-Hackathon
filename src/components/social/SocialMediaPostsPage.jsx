@@ -10,6 +10,7 @@ import PostsTab from "./PostsTab.jsx";
 import AnalyticsTab from "./AnalyticsTab.jsx";
 import DraftsTab from "./DraftsTab.jsx";
 import CreatePostFlow from "./CreatePostFlow.jsx";
+import PostDetailPage from "./PostDetailPage.jsx";
 
 const LOGO_BY_ID = { linkedin: LinkedinLogo, facebook: FacebookLogo, instagram: InstagramLogo };
 
@@ -26,6 +27,7 @@ export default function SocialMediaPostsPage() {
   const [tab, setTab] = useState("analytics");
   const [connectOpen, setConnectOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [viewing, setViewing] = useState(null);
   const [toast, setToast] = useState(null);
 
   const toggleAccount = (id) => {
@@ -48,6 +50,10 @@ export default function SocialMediaPostsPage() {
     window.clearTimeout(showToast._t);
     showToast._t = window.setTimeout(() => setToast(null), 2400);
   };
+
+  if (viewing) {
+    return <PostDetailPage post={viewing} onBack={() => setViewing(null)} />;
+  }
 
   if (creating) {
     return (
@@ -84,10 +90,10 @@ export default function SocialMediaPostsPage() {
       )}
 
       {tab === "analytics" && <AnalyticsTab accounts={accounts} />}
-      {tab === "calendar"  && <CalendarTab />}
-      {tab === "queue"     && <QueueTab     accounts={accounts} onCreate={() => setCreating(true)} />}
-      {tab === "drafts"    && <DraftsTab onCreate={() => setCreating(true)} />}
-      {tab === "posts"     && <PostsTab />}
+      {tab === "calendar"  && <CalendarTab onOpen={setViewing} />}
+      {tab === "queue"     && <QueueTab     accounts={accounts} onCreate={() => setCreating(true)} onOpen={setViewing} />}
+      {tab === "drafts"    && <DraftsTab onCreate={() => setCreating(true)} onOpen={setViewing} />}
+      {tab === "posts"     && <PostsTab onOpen={setViewing} />}
 
       {connectOpen && (
         <ConnectModal

@@ -25,7 +25,7 @@ const SORTS = [
   { id: "reach",      label: "Best reach" },
 ];
 
-export default function PostsTab() {
+export default function PostsTab({ onOpen }) {
   const [query, setQuery] = useState("");
   const [channel, setChannel] = useState("all");
   const [range, setRange] = useState("30d");
@@ -82,18 +82,21 @@ export default function PostsTab() {
         </div>
       ) : (
         <div className="grid grid-cols-3 gap-4">
-          {filtered.map((p) => <PostCard key={p.id} post={p} />)}
+          {filtered.map((p) => <PostCard key={p.id} post={p} onOpen={onOpen} />)}
         </div>
       )}
     </div>
   );
 }
 
-function PostCard({ post }) {
+function PostCard({ post, onOpen }) {
   const date = new Date(post.publishedAt).toLocaleString("en-US", { month: "short", day: "numeric" });
   const e = post.engagement ?? {};
   return (
-    <article className="flex flex-col rounded-md border border-line bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-chip">
+    <article
+      onClick={() => onOpen?.(post)}
+      className="flex cursor-pointer flex-col rounded-md border border-line bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-chip"
+    >
       <div className="flex aspect-square items-center justify-center rounded-t-md bg-surface-muted text-[64px]">
         {post.media?.thumb ?? "📝"}
       </div>
