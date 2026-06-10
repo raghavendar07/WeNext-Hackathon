@@ -20,7 +20,6 @@ import {
   BarChart3,
   Bot,
   MessagesSquare,
-  Ticket,
   FileText,
   Building2,
 } from "lucide-react";
@@ -172,14 +171,8 @@ export default function Sidebar({ active: activeProp, onActiveChange }) {
           <SubItem
             icon={Users}
             label="Customers"
-            active={CRM_TAB_IDS.includes(active) && active !== "tickets"}
+            active={CRM_TAB_IDS.includes(active)}
             onClick={() => setActive("customers")}
-          />
-          <SubItem
-            icon={Ticket}
-            label="Tickets"
-            active={active === "tickets"}
-            onClick={() => setActive("tickets")}
           />
           <SubItem
             icon={CalendarCheck}
