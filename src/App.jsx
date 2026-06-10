@@ -15,8 +15,11 @@ import EcommercePage from "./components/commerce/EcommercePage.jsx";
 import AIAgentsPage from "./components/ai/AIAgentsPage.jsx";
 import LiveChatPage from "./components/ai/LiveChatPage.jsx";
 import WhatsAppAIAgentPage from "./components/ai/WhatsAppAIAgentPage.jsx";
+import FlowsPage from "./components/flows/FlowsPage.jsx";
+import TeamManagementPage from "./components/team/TeamManagementPage.jsx";
+import IntegrationsPage from "./components/integrations/IntegrationsPage.jsx";
 
-const CRM_TAB_IDS = ["lead-board", "leads", "customers", "tags"];
+const CRM_TAB_IDS = ["lead-board", "leads", "customers", "tickets", "tags"];
 
 const LEGACY_REDIRECTS = {
   "commerce":                 { id: "ecommerce" },
@@ -117,6 +120,9 @@ function Home() {
   const isAIAgents = active === "ai-agents";
   const isLiveChat = active === "live-chat";
   const isWhatsAppAI = active === "whatsapp-ai-agent";
+  const isFlows = active === "flows";
+  const isTeam = active === "team-management";
+  const isIntegrations = active === "integrations";
 
   return (
     <MainLayout active={active} onActiveChange={handleActiveChange} flush={isChat}>
@@ -142,6 +148,12 @@ function Home() {
         <LiveChatPage />
       ) : isWhatsAppAI ? (
         <WhatsAppAIAgentPage />
+      ) : isFlows ? (
+        <FlowsPage />
+      ) : isTeam ? (
+        <TeamManagementPage />
+      ) : isIntegrations ? (
+        <IntegrationsPage />
       ) : (
         <div className="mx-auto flex max-w-6xl flex-col gap-5">
           <PageHeader

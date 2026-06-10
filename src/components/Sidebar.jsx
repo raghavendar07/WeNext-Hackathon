@@ -20,6 +20,9 @@ import {
   BarChart3,
   Bot,
   MessagesSquare,
+  Ticket,
+  FileText,
+  Building2,
 } from "lucide-react";
 import notificationIcon from "../assets/notification.svg";
 import Logo from "./Logo.jsx";
@@ -32,7 +35,7 @@ import ProfilePanel from "./ProfilePanel.jsx";
 import NotificationPanel from "./NotificationPanel.jsx";
 import SearchInput from "./SearchInput.jsx";
 
-const CRM_TAB_IDS = ["lead-board", "leads", "customers", "tags"];
+const CRM_TAB_IDS = ["lead-board", "leads", "customers", "tickets", "tags"];
 const COMMERCE_TAB_IDS = [
   "commerce-overview",
   "commerce-catalog",
@@ -144,6 +147,13 @@ export default function Sidebar({ active: activeProp, onActiveChange }) {
             active={active === "social-media-posts"}
             onClick={() => setActive("social-media-posts")}
           />
+          <SubItem
+            icon={FileText}
+            label="WhatsApp Flows"
+            badge="new"
+            active={active === "flows"}
+            onClick={() => setActive("flows")}
+          />
         </Section>
 
         <NavItem
@@ -162,8 +172,14 @@ export default function Sidebar({ active: activeProp, onActiveChange }) {
           <SubItem
             icon={Users}
             label="Customers"
-            active={CRM_TAB_IDS.includes(active)}
+            active={CRM_TAB_IDS.includes(active) && active !== "tickets"}
             onClick={() => setActive("customers")}
+          />
+          <SubItem
+            icon={Ticket}
+            label="Tickets"
+            active={active === "tickets"}
+            onClick={() => setActive("tickets")}
           />
           <SubItem
             icon={CalendarCheck}
@@ -247,6 +263,20 @@ export default function Sidebar({ active: activeProp, onActiveChange }) {
           active={active === "integrations"}
           onClick={() => setActive("integrations")}
         />
+
+        <Section
+          label="Organization"
+          icon={Building2}
+          open={openSection === "ORGANIZATION"}
+          onToggle={sectionToggle("ORGANIZATION")}
+        >
+          <SubItem
+            icon={Users}
+            label="Team Management"
+            active={active === "team-management"}
+            onClick={() => setActive("team-management")}
+          />
+        </Section>
       </nav>
 
       {/* Bottom */}
