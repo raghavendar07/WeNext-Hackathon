@@ -34,7 +34,7 @@ import ProfilePanel from "./ProfilePanel.jsx";
 import NotificationPanel from "./NotificationPanel.jsx";
 import SearchInput from "./SearchInput.jsx";
 
-const CRM_TAB_IDS = ["lead-board", "leads", "customers", "tickets", "tags"];
+const CRM_TAB_IDS = ["lead-board", "tickets", "tags"];
 const COMMERCE_TAB_IDS = [
   "commerce-overview",
   "commerce-catalog",

@@ -1,8 +1,6 @@
 import { useState } from "react";
 import PageTabs from "../ui/PageTabs.jsx";
 import LeadBoardPage from "./LeadBoardPage.jsx";
-import LeadsTablePage from "./LeadsTablePage.jsx";
-import CustomersPage from "./CustomersPage.jsx";
 import TagsPage from "./TagsPage.jsx";
 import TicketsBoardPage from "./TicketsBoardPage.jsx";
 import CustomerDetailPage from "./CustomerDetailPage.jsx";
@@ -11,16 +9,12 @@ import { CUSTOMERS, LEADS } from "./data.js";
 
 const CRM_TABS = [
   { id: "lead-board", label: "Lead Board" },
-  { id: "leads",      label: "Leads" },
-  { id: "customers",  label: "Customers" },
   { id: "tickets",    label: "Tickets" },
   { id: "tags",       label: "Tags" },
 ];
 
 const TITLES = {
-  "lead-board": { title: "Lead Board",     subtitle: "Visualize and move leads through your sales pipeline" },
-  leads:        { title: "Leads",          subtitle: "Prioritize and act on inbound leads from every channel" },
-  customers:    { title: "Customers",      subtitle: "Identify champions, retain at-risk accounts, grow LTV" },
+  "lead-board": { title: "Lead Board",     subtitle: "Pipeline + table view for leads and customers" },
   tickets:      { title: "Support Tickets", subtitle: "Triage, assign and resolve customer issues across every channel" },
   tags:         { title: "Tags",           subtitle: "Segment contacts and trigger automations from tags" },
 };
@@ -61,13 +55,10 @@ export default function CRMPage({ tab = "lead-board", onTabChange }) {
 
       <div className="flex flex-1 flex-col">
         {tab === "lead-board" && (
-          <LeadBoardPage onOpenLead={(lead) => setViewing({ kind: "lead", id: lead.id })} />
-        )}
-        {tab === "leads" && (
-          <LeadsTablePage onOpenLead={(lead) => setViewing({ kind: "lead", id: lead.id })} />
-        )}
-        {tab === "customers" && (
-          <CustomersPage onOpenCustomer={(c) => setViewing({ kind: "customer", id: c.id })} />
+          <LeadBoardPage
+            onOpenLead={(lead) => setViewing({ kind: "lead", id: lead.id })}
+            onOpenCustomer={(c) => setViewing({ kind: "customer", id: c.id })}
+          />
         )}
         {tab === "tickets" && <TicketsBoardPage />}
         {tab === "tags" && <TagsPage />}

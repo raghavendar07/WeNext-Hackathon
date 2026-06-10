@@ -19,7 +19,7 @@ import FlowsPage from "./components/flows/FlowsPage.jsx";
 import TeamManagementPage from "./components/team/TeamManagementPage.jsx";
 import IntegrationsPage from "./components/integrations/IntegrationsPage.jsx";
 
-const CRM_TAB_IDS = ["lead-board", "leads", "customers", "tickets", "tags"];
+const CRM_TAB_IDS = ["lead-board", "tickets", "tags"];
 
 const LEGACY_REDIRECTS = {
   "commerce":                 { id: "ecommerce" },
