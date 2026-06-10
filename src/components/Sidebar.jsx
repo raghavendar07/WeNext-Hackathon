@@ -172,7 +172,7 @@ export default function Sidebar({ active: activeProp, onActiveChange }) {
             icon={Users}
             label="Customers"
             active={CRM_TAB_IDS.includes(active)}
-            onClick={() => setActive("customers")}
+            onClick={() => setActive("lead-board")}
           />
           <SubItem
             icon={CalendarCheck}

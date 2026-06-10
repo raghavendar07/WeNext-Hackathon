@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { LayoutGrid, Table as TableIcon, Search, MoreHorizontal, Plus, X, UserPlus, Sparkles } from "lucide-react";
+import { LayoutGrid, Table as TableIcon, Search, MoreHorizontal, Plus, X, UserPlus, Sparkles, Filter } from "lucide-react";
 import KanbanColumn from "./KanbanColumn.jsx";
 import LeadDetailDrawer from "./LeadDetailDrawer.jsx";
 import IntentBadge from "./IntentBadge.jsx";
@@ -28,8 +28,10 @@ export default function LeadBoardPage({ onOpenLead, onOpenCustomer }) {
   const [typeFilter, setTypeFilter] = useState("all");
   const [query, setQuery] = useState("");
 
-  // Modals
+  // Modals + popovers
   const [addModal, setAddModal] = useState(null); // "lead" | "customer" | null
+  const [newMenuOpen, setNewMenuOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
   const addLead = (data) => {
     const id = `l-new-${Date.now()}`;
@@ -96,8 +98,17 @@ export default function LeadBoardPage({ onOpenLead, onOpenCustomer }) {
       <Toolbar
         view={view}
         onViewChange={setView}
-        onAddLead={() => setAddModal("lead")}
-        onAddCustomer={() => setAddModal("customer")}
+        query={query}
+        onQueryChange={setQuery}
+        newMenuOpen={newMenuOpen}
+        onToggleNewMenu={() => setNewMenuOpen((v) => !v)}
+        onCloseNewMenu={() => setNewMenuOpen(false)}
+        moreMenuOpen={moreMenuOpen}
+        onToggleMoreMenu={() => setMoreMenuOpen((v) => !v)}
+        onCloseMoreMenu={() => setMoreMenuOpen(false)}
+        onAddLead={() => { setNewMenuOpen(false); setAddModal("lead"); }}
+        onAddCustomer={() => { setNewMenuOpen(false); setAddModal("customer"); }}
+        onFilter={() => alert("Filter (mock)")}
       />
 
       {view === "grid" ? (
@@ -142,36 +153,116 @@ export default function LeadBoardPage({ onOpenLead, onOpenCustomer }) {
   );
 }
 
-function Toolbar({ view, onViewChange, onAddLead, onAddCustomer }) {
+function Toolbar({
+  view, onViewChange,
+  query, onQueryChange,
+  newMenuOpen, onToggleNewMenu, onCloseNewMenu,
+  moreMenuOpen, onToggleMoreMenu, onCloseMoreMenu,
+  onAddLead, onAddCustomer, onFilter,
+}) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-2">
-        <span className="text-[12px] font-semibold text-ink-muted">View:</span>
-        <div className="inline-flex h-9 rounded-md border border-line bg-white p-0.5">
-          <ToggleBtn active={view === "grid"} onClick={() => onViewChange("grid")} icon={<LayoutGrid size={14} />}>Grid</ToggleBtn>
-          <ToggleBtn active={view === "table"} onClick={() => onViewChange("table")} icon={<TableIcon size={14} />}>Table</ToggleBtn>
-        </div>
+      {/* Left: view toggle */}
+      <div className="inline-flex h-10 rounded-md border border-line bg-white p-0.5">
+        <ToggleBtn active={view === "grid"} onClick={() => onViewChange("grid")} icon={<LayoutGrid size={14} />}>Grid</ToggleBtn>
+        <ToggleBtn active={view === "table"} onClick={() => onViewChange("table")} icon={<TableIcon size={14} />}>Table</ToggleBtn>
       </div>
 
+      {/* Right: search + filter + more + new */}
       <div className="flex items-center gap-2">
+        <label className="flex h-10 w-[240px] items-center gap-2 rounded-lg border border-line bg-white px-3">
+          <Search size={14} className="text-ink-subtle" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+            placeholder="Search..."
+            className="min-w-0 flex-1 bg-transparent text-[13px] text-ink-heading placeholder:text-ink-subtle focus:outline-none"
+          />
+        </label>
+
         <button
           type="button"
-          onClick={onAddLead}
-          className="inline-flex h-9 items-center gap-1.5 rounded-button border border-line bg-white px-3 text-[12px] font-semibold text-ink-body hover:bg-surface-subtle"
+          onClick={onFilter}
+          className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-[13px] font-semibold text-ink-body hover:bg-surface-subtle"
         >
-          <UserPlus size={14} />
-          Add lead
+          <Filter size={14} />
+          Filter
         </button>
-        <button
-          type="button"
-          onClick={onAddCustomer}
-          className="inline-flex h-9 items-center gap-1.5 rounded-button bg-cta-gradient px-4 text-[12px] font-semibold text-white shadow-sm hover:opacity-90"
-        >
-          <Plus size={14} />
-          Add customer
-        </button>
+
+        <div className="relative">
+          <button
+            type="button"
+            onClick={onToggleMoreMenu}
+            aria-label="More options"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-line bg-white text-ink-muted hover:bg-surface-subtle"
+          >
+            <MoreHorizontal size={16} />
+          </button>
+          {moreMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={onCloseMoreMenu} />
+              <div className="absolute right-0 top-full z-20 mt-1 w-44 rounded-[8px] border border-line bg-white p-1 shadow-lg">
+                <MenuRow label="Export CSV" onClick={() => { onCloseMoreMenu(); alert("Export CSV (mock)"); }} />
+                <MenuRow label="Import contacts" onClick={() => { onCloseMoreMenu(); alert("Import (mock)"); }} />
+                <MenuRow label="Bulk actions" onClick={() => { onCloseMoreMenu(); alert("Bulk actions (mock)"); }} />
+                <div className="my-1 h-px bg-line" />
+                <MenuRow label="Board settings" onClick={() => { onCloseMoreMenu(); alert("Settings (mock)"); }} />
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="relative">
+          <button
+            type="button"
+            onClick={onToggleNewMenu}
+            className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-cta-gradient px-4 text-[13px] font-semibold text-white shadow-sm hover:opacity-90"
+          >
+            <Plus size={15} />
+            New
+          </button>
+          {newMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={onCloseNewMenu} />
+              <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-[8px] border border-line bg-white p-1 shadow-lg">
+                <MenuRow
+                  icon={<UserPlus size={14} className="text-ink-muted" />}
+                  label="New lead"
+                  hint="Add to pipeline"
+                  onClick={onAddLead}
+                />
+                <MenuRow
+                  icon={<Sparkles size={14} className="text-brand-emerald" />}
+                  label="New customer"
+                  hint="Existing buyer"
+                  onClick={onAddCustomer}
+                />
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
+  );
+}
+
+function MenuRow({ icon, label, hint, onClick, danger }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        "flex w-full items-start gap-2 rounded-[6px] px-2 py-1.5 text-left",
+        danger ? "text-danger hover:bg-red-50" : "text-ink-body hover:bg-surface-subtle",
+      ].join(" ")}
+    >
+      {icon}
+      <div className="flex-1">
+        <div className="text-[12px] font-semibold">{label}</div>
+        {hint && <div className="text-[10px] text-ink-muted">{hint}</div>}
+      </div>
+    </button>
   );
 }
 
@@ -243,50 +334,29 @@ function TableView({ leads, customers, typeFilter, onTypeFilterChange, query, on
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Filter row */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="flex h-10 w-[260px] items-center gap-2 rounded-lg border border-line bg-white px-3">
-            <Search size={14} className="text-ink-subtle" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => onQueryChange(e.target.value)}
-              placeholder="Search name, email, phone…"
-              className="min-w-0 flex-1 bg-transparent text-[13px] text-ink-heading placeholder:text-ink-subtle focus:outline-none"
-            />
-          </label>
-          <div className="flex items-center gap-1.5">
-            {TYPE_FILTERS.map((f) => {
-              const isActive = typeFilter === f.id;
-              return (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => onTypeFilterChange(f.id)}
-                  className={[
-                    "inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors",
-                    isActive
-                      ? "border-brand-emerald bg-brand-50 text-brand-emerald"
-                      : "border-line bg-white text-ink-muted hover:bg-surface-subtle",
-                  ].join(" ")}
-                >
-                  {f.label}
-                  <span className={isActive ? "rounded-full bg-white px-1.5 py-0.5 text-[10px]" : "rounded-full bg-surface-subtle px-1.5 py-0.5 text-[10px]"}>
-                    {counts[f.id]}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => alert("Export CSV (mock)")}
-          className="inline-flex h-9 items-center gap-1.5 rounded-button border border-line bg-white px-3 text-[12px] font-medium text-ink-body hover:bg-surface-subtle"
-        >
-          Export
-        </button>
+      {/* Type filter chips */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {TYPE_FILTERS.map((f) => {
+          const isActive = typeFilter === f.id;
+          return (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => onTypeFilterChange(f.id)}
+              className={[
+                "inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors",
+                isActive
+                  ? "border-brand-emerald bg-brand-50 text-brand-emerald"
+                  : "border-line bg-white text-ink-muted hover:bg-surface-subtle",
+              ].join(" ")}
+            >
+              {f.label}
+              <span className={isActive ? "rounded-full bg-white px-1.5 py-0.5 text-[10px]" : "rounded-full bg-surface-subtle px-1.5 py-0.5 text-[10px]"}>
+                {counts[f.id]}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Table */}
