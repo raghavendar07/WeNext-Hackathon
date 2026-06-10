@@ -1,11 +1,14 @@
 import { useMemo, useState } from "react";
-import { LayoutGrid, Table as TableIcon, Search, MoreHorizontal } from "lucide-react";
+import { LayoutGrid, Table as TableIcon, Search, MoreHorizontal, Plus, X, UserPlus, Sparkles } from "lucide-react";
 import KanbanColumn from "./KanbanColumn.jsx";
 import LeadDetailDrawer from "./LeadDetailDrawer.jsx";
 import IntentBadge from "./IntentBadge.jsx";
 import SourceBadge from "./SourceBadge.jsx";
 import Avatar from "../inbox/Avatar.jsx";
 import { LEADS, CUSTOMERS, STAGES } from "./data.js";
+
+const PALETTES = ["pink", "blue", "green", "coral", "rose"];
+const randPalette = () => PALETTES[Math.floor(Math.random() * PALETTES.length)];
 
 const TYPE_FILTERS = [
   { id: "all",       label: "All" },
@@ -16,6 +19,7 @@ const TYPE_FILTERS = [
 export default function LeadBoardPage({ onOpenLead, onOpenCustomer }) {
   const [view, setView] = useState("grid");
   const [leads, setLeads] = useState(LEADS);
+  const [customers, setCustomers] = useState(CUSTOMERS);
   const [draggingId, setDraggingId] = useState(null);
   const [dropTarget, setDropTarget] = useState(null);
   const [openLead, setOpenLead] = useState(null);
@@ -23,6 +27,47 @@ export default function LeadBoardPage({ onOpenLead, onOpenCustomer }) {
   // Table-only state
   const [typeFilter, setTypeFilter] = useState("all");
   const [query, setQuery] = useState("");
+
+  // Modals
+  const [addModal, setAddModal] = useState(null); // "lead" | "customer" | null
+
+  const addLead = (data) => {
+    const id = `l-new-${Date.now()}`;
+    setLeads((prev) => [
+      {
+        id,
+        name: data.name,
+        phone: data.phone,
+        source: data.source,
+        intent: data.intent,
+        lastActivity: "Just added",
+        action: "Reply now",
+        tags: data.tags ? data.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
+        stage: "prospects",
+        palette: randPalette(),
+      },
+      ...prev,
+    ]);
+    setAddModal(null);
+  };
+
+  const addCustomer = (data) => {
+    const id = `cu-new-${Date.now()}`;
+    setCustomers((prev) => [
+      {
+        id,
+        name: data.name,
+        email: data.email,
+        lifecycle: data.lifecycle,
+        engagement: data.engagement,
+        ltv: Number(data.ltv) || 0,
+        lastPurchase: "Today",
+        palette: randPalette(),
+      },
+      ...prev,
+    ]);
+    setAddModal(null);
+  };
 
   const handleOpenLead = (lead) => {
     if (onOpenLead) onOpenLead(lead);
@@ -48,7 +93,12 @@ export default function LeadBoardPage({ onOpenLead, onOpenCustomer }) {
 
   return (
     <div className="flex flex-1 flex-col gap-4">
-      <Toolbar view={view} onViewChange={setView} />
+      <Toolbar
+        view={view}
+        onViewChange={setView}
+        onAddLead={() => setAddModal("lead")}
+        onAddCustomer={() => setAddModal("customer")}
+      />
 
       {view === "grid" ? (
         <div className="-mx-6 flex flex-1 gap-3 overflow-x-auto px-6">
@@ -72,7 +122,7 @@ export default function LeadBoardPage({ onOpenLead, onOpenCustomer }) {
       ) : (
         <TableView
           leads={leads}
-          customers={CUSTOMERS}
+          customers={customers}
           typeFilter={typeFilter}
           onTypeFilterChange={setTypeFilter}
           query={query}
@@ -81,19 +131,45 @@ export default function LeadBoardPage({ onOpenLead, onOpenCustomer }) {
           onOpenCustomer={handleOpenCustomer}
         />
       )}
+
+      {addModal === "lead" && (
+        <AddLeadModal onClose={() => setAddModal(null)} onSave={addLead} />
+      )}
+      {addModal === "customer" && (
+        <AddCustomerModal onClose={() => setAddModal(null)} onSave={addCustomer} />
+      )}
     </div>
   );
 }
 
-function Toolbar({ view, onViewChange }) {
+function Toolbar({ view, onViewChange, onAddLead, onAddCustomer }) {
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-2">
         <span className="text-[12px] font-semibold text-ink-muted">View:</span>
         <div className="inline-flex h-9 rounded-md border border-line bg-white p-0.5">
           <ToggleBtn active={view === "grid"} onClick={() => onViewChange("grid")} icon={<LayoutGrid size={14} />}>Grid</ToggleBtn>
           <ToggleBtn active={view === "table"} onClick={() => onViewChange("table")} icon={<TableIcon size={14} />}>Table</ToggleBtn>
         </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onAddLead}
+          className="inline-flex h-9 items-center gap-1.5 rounded-button border border-line bg-white px-3 text-[12px] font-semibold text-ink-body hover:bg-surface-subtle"
+        >
+          <UserPlus size={14} />
+          Add lead
+        </button>
+        <button
+          type="button"
+          onClick={onAddCustomer}
+          className="inline-flex h-9 items-center gap-1.5 rounded-button bg-cta-gradient px-4 text-[12px] font-semibold text-white shadow-sm hover:opacity-90"
+        >
+          <Plus size={14} />
+          Add customer
+        </button>
       </div>
     </div>
   );
@@ -292,5 +368,203 @@ function TableView({ leads, customers, typeFilter, onTypeFilterChange, query, on
 function Th({ children, align }) {
   return (
     <th className={["px-4 py-3", align === "right" ? "text-right" : "text-left"].join(" ")}>{children}</th>
+  );
+}
+
+/* ──────────── Add modals ──────────── */
+
+function ModalShell({ title, subtitle, icon, onClose, children, footer }) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-md rounded-[14px] bg-white shadow-xl">
+        <div className="flex items-start justify-between border-b border-line px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-brand-50 text-brand-emerald">
+              {icon}
+            </div>
+            <div>
+              <h2 className="text-[15px] font-semibold text-ink-heading">{title}</h2>
+              {subtitle && <p className="mt-0.5 text-[12px] text-ink-muted">{subtitle}</p>}
+            </div>
+          </div>
+          <button onClick={onClose} className="rounded p-1.5 text-ink-muted hover:bg-surface-subtle" aria-label="Close">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="px-5 py-5">{children}</div>
+        {footer && <div className="flex items-center justify-end gap-2 border-t border-line px-5 py-3.5">{footer}</div>}
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children, required }) {
+  return (
+    <label className="block py-1.5">
+      <span className="block text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">
+        {label}{required && <span className="ml-0.5 text-danger">*</span>}
+      </span>
+      <div className="mt-1">{children}</div>
+    </label>
+  );
+}
+
+function Input(props) {
+  return (
+    <input
+      {...props}
+      className="h-10 w-full rounded-[8px] border border-line bg-white px-3 text-[13px] text-ink-heading outline-none focus:border-brand-emerald"
+    />
+  );
+}
+
+function Select({ value, onChange, options }) {
+  return (
+    <select
+      value={value}
+      onChange={onChange}
+      className="h-10 w-full rounded-[8px] border border-line bg-white px-2 text-[13px] text-ink-heading outline-none focus:border-brand-emerald"
+    >
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
+  );
+}
+
+function AddLeadModal({ onClose, onSave }) {
+  const [f, setF] = useState({
+    name: "",
+    phone: "",
+    source: "website",
+    intent: "warm",
+    tags: "",
+  });
+  const update = (patch) => setF((prev) => ({ ...prev, ...patch }));
+  const canSave = f.name.trim() && f.phone.trim();
+
+  return (
+    <ModalShell
+      title="Add lead"
+      subtitle="Capture a new prospect into your pipeline"
+      icon={<Sparkles size={16} />}
+      onClose={onClose}
+      footer={
+        <>
+          <button onClick={onClose} className="rounded-[8px] px-3 py-1.5 text-[12px] font-semibold text-ink-muted hover:bg-surface-subtle">Cancel</button>
+          <button
+            disabled={!canSave}
+            onClick={() => onSave(f)}
+            className="rounded-[8px] bg-cta-gradient px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-40"
+          >
+            Save lead
+          </button>
+        </>
+      }
+    >
+      <Field label="Full name" required>
+        <Input value={f.name} onChange={(e) => update({ name: e.target.value })} placeholder="e.g. Aisha Khan" autoFocus />
+      </Field>
+      <Field label="Phone" required>
+        <Input value={f.phone} onChange={(e) => update({ phone: e.target.value })} placeholder="+91 98xxx xxxxx" />
+      </Field>
+      <Field label="Source">
+        <Select
+          value={f.source}
+          onChange={(e) => update({ source: e.target.value })}
+          options={[
+            { value: "website",  label: "Website" },
+            { value: "instagram", label: "Instagram" },
+            { value: "whatsapp",  label: "WhatsApp" },
+            { value: "ads",       label: "Ads" },
+            { value: "referral",  label: "Referral" },
+          ]}
+        />
+      </Field>
+      <Field label="Intent">
+        <Select
+          value={f.intent}
+          onChange={(e) => update({ intent: e.target.value })}
+          options={[
+            { value: "hot",  label: "🔥 Hot" },
+            { value: "warm", label: "🌤 Warm" },
+            { value: "cold", label: "❄️ Cold" },
+          ]}
+        />
+      </Field>
+      <Field label="Tags">
+        <Input value={f.tags} onChange={(e) => update({ tags: e.target.value })} placeholder="Comma-separated, e.g. VIP, Demo" />
+      </Field>
+    </ModalShell>
+  );
+}
+
+function AddCustomerModal({ onClose, onSave }) {
+  const [f, setF] = useState({
+    name: "",
+    email: "",
+    lifecycle: "new",
+    engagement: "high",
+    ltv: "",
+  });
+  const update = (patch) => setF((prev) => ({ ...prev, ...patch }));
+  const canSave = f.name.trim() && f.email.trim();
+
+  return (
+    <ModalShell
+      title="Add customer"
+      subtitle="Add a new account to your customer base"
+      icon={<UserPlus size={16} />}
+      onClose={onClose}
+      footer={
+        <>
+          <button onClick={onClose} className="rounded-[8px] px-3 py-1.5 text-[12px] font-semibold text-ink-muted hover:bg-surface-subtle">Cancel</button>
+          <button
+            disabled={!canSave}
+            onClick={() => onSave(f)}
+            className="rounded-[8px] bg-cta-gradient px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-40"
+          >
+            Save customer
+          </button>
+        </>
+      }
+    >
+      <Field label="Full name" required>
+        <Input value={f.name} onChange={(e) => update({ name: e.target.value })} placeholder="e.g. Karthik Rao" autoFocus />
+      </Field>
+      <Field label="Email" required>
+        <Input value={f.email} onChange={(e) => update({ email: e.target.value })} placeholder="name@company.com" />
+      </Field>
+      <Field label="Lifecycle">
+        <Select
+          value={f.lifecycle}
+          onChange={(e) => update({ lifecycle: e.target.value })}
+          options={[
+            { value: "new",       label: "New" },
+            { value: "active",    label: "Active" },
+            { value: "champion",  label: "Champion" },
+            { value: "at-risk",   label: "At-risk" },
+          ]}
+        />
+      </Field>
+      <Field label="Engagement">
+        <Select
+          value={f.engagement}
+          onChange={(e) => update({ engagement: e.target.value })}
+          options={[
+            { value: "high",   label: "High" },
+            { value: "medium", label: "Medium" },
+            { value: "low",    label: "Low" },
+          ]}
+        />
+      </Field>
+      <Field label="Lifetime value (₹)">
+        <Input
+          value={f.ltv}
+          onChange={(e) => update({ ltv: e.target.value.replace(/[^0-9]/g, "") })}
+          placeholder="e.g. 4280"
+        />
+      </Field>
+    </ModalShell>
   );
 }
